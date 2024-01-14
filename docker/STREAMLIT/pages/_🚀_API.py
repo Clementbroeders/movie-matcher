@@ -1,22 +1,23 @@
 import streamlit as st
 
-### Config
+### CONFIGURATION
 st.set_page_config(
     page_title="Movie Matcher - API 🚀",
     page_icon="🚀",
     layout="wide"
 )
 
-### App
+### APP
 st.title("🚀 API")
 
 ### FASTAPI
-
 fastapi_url = "http://localhost:4000/docs"
 st.markdown(f'<iframe src="{fastapi_url}" width = "100%" height = 1000 style = "border: none;"></iframe>', unsafe_allow_html=True)
 
 
-### Footer 
+### FOOTER
 st.markdown("""
-    Powered by [Streamlit](https://docs.streamlit.io/) & [JustWatch](https://www.justwatch.com/)
-""")
+    <p style='text-align:center;'>
+        Powered by <a href='https://streamlit.io/'>Streamlit</a> & <a href='https://www.justwatch.com/'>JustWatch</a>
+    </p>
+""", unsafe_allow_html=True)
