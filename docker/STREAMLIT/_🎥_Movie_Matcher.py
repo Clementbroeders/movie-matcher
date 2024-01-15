@@ -52,7 +52,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-tmdb_selection = tmdb_content.loc[:,['TMDB_id', 'title']]
+tmdb_selection = tmdb_content.loc[:,['tmdb_id', 'title']]
 tmdb_selection.loc[-1] = [None, 'Selectionnez un film']
 tmdb_selection.index = tmdb_selection.index + 1
 tmdb_selection = tmdb_selection.sort_index()
@@ -67,7 +67,7 @@ for i, column in enumerate(columns):
         </div>
     """, unsafe_allow_html=True)
     movie = column.selectbox(f"Film {i+1}", tmdb_selection['title'], label_visibility='collapsed')
-    movie_id = tmdb_selection.loc[tmdb_selection['title'] == movie, 'TMDB_id'].values[0]
+    movie_id = tmdb_selection.loc[tmdb_selection['title'] == movie, 'tmdb_id'].values[0]
     selected_movies.append({"id": movie_id, "title": movie})
 
 st.markdown("---")
@@ -76,7 +76,7 @@ st.markdown("---")
 ### FILTRES
 st.markdown("""
     <div style='text-align:center;'>
-        <h2>Votre sélection filtrées</h2>
+        <h2>Votre sélection filtrée</h2>
         <p style="font-size: 1.2rem;">Nous vous recommandons de commencer par explorer les recommandations sans appliquer de filtres.</p>
         <p style="font-size: 1.2rem;">Affinez ensuite votre choix en explorant divers filtres pour trouver le film qui correspond parfaitement à vos préférences.</p>
         
@@ -144,23 +144,31 @@ st.markdown("---")
 
 
 ### RECOMMANDATIONS
-st.markdown("""
-    <div style='text-align:center;'>
-        <h2>Nos recommandations</h2>
-        <p style="font-size: 1.2rem;">Voici quelques-uns des films que nous vous recommandons.</p>
-        
-    </div>
-""", unsafe_allow_html=True)
 
-columns = st.columns(5) # Recommandations
-for i, column in enumerate(columns):
-    column.markdown(f"""
+columns = st.columns(9)
+with columns[4]:
+    button_recommandations = st.button("Recommandations 🌟", help = "Cliquez ici pour afficher les recommandations", type = 'primary')
+
+result_container = st.empty()
+
+if button_recommandations:
+    result_container.markdown("""
         <div style='text-align:center;'>
-            <p style="font-size: 1.2rem;">Film recommandé {i+1}</p>
+            <h2>Nos recommandations</h2>
+            <p style="font-size: 1.2rem;">Voici quelques-uns des films que nous vous recommandons.</p>
+            
         </div>
     """, unsafe_allow_html=True)
-    column.image("https://image.tmdb.org/t/p/w500//hr0L2aueqlP2BYUblTTjmtn0hw4.jpg", use_column_width="auto")
 
+    columns = st.columns(5) # Recommandations   
+    for i, column in enumerate(columns):
+        column.markdown(f"""
+            <div style='text-align:center;'>
+                <p style="font-size: 1.2rem;">Film recommandé {i+1}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        column.image("https://image.tmdb.org/t/p/w500//hr0L2aueqlP2BYUblTTjmtn0hw4.jpg", use_column_width="auto")
+            
 st.markdown("---")
 
 
