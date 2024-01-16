@@ -1,9 +1,26 @@
+### LIBRAIRIES ###
 import uvicorn
 import pandas as pd 
 from fastapi import FastAPI
+from pydantic import BaseModel
+from surprise import Dataset, Reader, SVD
 
+
+### APP ###
 app = FastAPI()
 
+
+### LOAD FILES ###
+ratings_updated = pd.read_csv('data/Movielens_ratings_updated.csv')
+# content_based = pd.read_csv('data/content_based.csv')
+
+
+### FONCTIONS ###
+class RecommendationRequest(BaseModel):
+    favorite_movies: list
+
+
+### GET ###
 @app.get("/")
 async def index():
 
@@ -11,30 +28,39 @@ async def index():
 
     return message
 
-@app.get("/custom-greetings")
-async def custom_greetings(name: str = "Mr (or Miss) Nobody"):
-    greetings = {
-        "Message": f"Hello {name} How are you today?"
-    }
-    return greetings
+### POST ###
+@app.post("/predict")
+async def predict(recommendation_request: RecommendationRequest):
+    global ratings_updated
 
-@app.get("/blog-articles/{blog_id}")
-async def read_blog_article(blog_id: int):
+    favorite_movies = recommendation_request.favorite_movies
 
-    articles = pd.read_csv("https://full-stack-assets.s3.eu-west-3.amazonaws.com/Deployment/articles.csv")
-    if blog_id > len(articles):
-        response = {
-            "msg": "We don't have that many articles!"
-        }
-    else:
-        article = articles.iloc[blog_id, :]
-        response = {
-            "title": article.title,
-            "content": article.content, 
-            "author": article.author
-        }
+    ### COLLABORATIVE FILTERING ###
+    new_user_id = ratings_updated['userId'].max() + 1
 
-    return response
+    for i in favorite_movies:
+        newdata = pd.DataFrame([[new_user_id, i, 5.0]], columns=['userId', 'tmdb_id', 'rating'])
+        ratings_updated = pd.concat([ratings_updated, newdata], ignore_index=True)
 
+    reader = Reader(rating_scale=(0.5, 5))
+    data = Dataset.load_from_df(ratings_updated[['userId', 'tmdb_id', 'rating']], reader)
+    svd = SVD()
+    train_set = data.build_full_trainset()
+    svd.fit(train_set)
+
+    all_pred = []
+    movie_id = []
+    for movie in ratings_updated['tmdb_id'].unique().tolist():
+        pred = svd.predict(new_user_id, movie)
+        all_pred.append(pred.est)
+        movie_id.append(pred.iid)
+
+    result = pd.DataFrame(list(zip(movie_id, all_pred)), columns=['tmdb_id', 'predicted_rating'])
+    result.sort_values(by='predicted_rating', ascending=False, inplace=True)
+
+    return result.to_dict(orient='records')
+
+
+### RUN APP ###
 if __name__=="__main__":
     uvicorn.run(app, host="0.0.0.0", port=4000) # Here you define your web server to run the `app` variable (which contains FastAPI instance), with a specific host IP (0.0.0.0) and port (4000)

@@ -29,6 +29,32 @@
 
 ---
 
+## Nos formules mathématiques :
+
+1) Weighted IMDB score :
+
+    $\text{Score} = \left( \frac{v}{v+m} \cdot R \right) + \left( \frac{m}{m+v} \cdot C \right)$
+
+    **Où :**
+    - $v$ est le nombre de votes pour le film
+    - $m$ est le nombre minimum de votes requis pour figurer dans le classement
+    - $R$ est la note moyenne du film
+    - $C$ est la moyenne des votes au global
+
+
+2) Hybrid system score :
+
+    $Score_{film} = w_{CF} * S_{CF} + w_{CB} * (\frac{\sum_{i=1}^{n} S_{CB_i}}{n} + \alpha * n)$
+
+    **Où :**
+    - $w_{CF}$ est le poids pour le modèle de filtrage collaboratif,
+    - $S_{CF}$ est la note prédite (si le film n'est pas présent dans le modèle de filtrage collaboratif, vous pouvez utiliser la moyenne des scores comme valeur par défaut),
+    - $w_{CB}$ est le poids pour le modèle content-based,
+    - $S_{CB_i}$ est le score de similarité content-based pour la \(i\)-ième occurrence du film,
+    - $n$ est le nombre d'occurrences du film dans les prédictions du modèle content-based,
+    - $\alpha$ est un paramètre de réglage.
+
+
 ## Instructions si aucun fichier n'est présent dans `src/` :
 
 1) Telecharger le dataset MovieLens : [Movielens dataset](https://files.grouplens.org/datasets/movielens/ml-latest.zip)
