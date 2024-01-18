@@ -15,6 +15,9 @@ COPY requirements.txt /home/app
 RUN conda install -c conda-forge scikit-surprise
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Send files to the container
+COPY . /home/app/
+
 # Set the default value for the environment variable
 ENV PORT=4000
 

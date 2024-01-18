@@ -14,6 +14,9 @@ RUN curl -fsSL https://get.deta.dev/cli.sh | sh
 COPY requirements.txt /home/app
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Send file to container
+COPY . /home/app/
+
 # Set the default value for the environment variable
 ENV PORT=8501
 

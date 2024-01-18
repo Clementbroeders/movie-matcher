@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
+    networks:
+      - my-network
     volumes:
-      - "./FASTAPI:/home/app" 
+      - "./FASTAPI:/home/app"
 
   streamlit:
     build:
@@ -16,5 +18,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8501:8501"
+    networks:
+      - my-network
     volumes:
       - "./STREAMLIT:/home/app"
+
+networks:
+  my-network:
+    driver: bridge
