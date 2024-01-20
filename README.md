@@ -1,16 +1,22 @@
-# MOVIE MATCHER - Moteur de recommandation de films
+# MOVIE MATCHER
+## Moteur de recommandation de films
 
-<img src="img/dark.jpg" alt="Image" width="50%" height="50%">
+<p align="center">
+    <img src="img/dark.jpg" alt="Image" width="50%" height="50%">
+</p>
+
 
 ## Introduction
 
-Introduction
+Movie Matcher est un moteur de recommandation de films...
 
 ---
 
 ## Schéma des flux
 
-<img src="img/schema.png" alt="Schéma" width="50%" height="50%">
+<p align="center">
+    <img src="img/schema.png" alt="Schéma" width="100%" height="100%">
+</p>
 
 ---
 
