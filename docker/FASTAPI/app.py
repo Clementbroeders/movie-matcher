@@ -45,7 +45,8 @@ async def predict(recommendation_request: RecommendationRequest):
     # Train model with new data:
     reader = Reader(rating_scale=(0.5, 5))
     data = Dataset.load_from_df(ratings_updated[['userId', 'tmdb_id', 'rating']], reader)
-    svd = SVD()
+    best_hyperparams = {'n_factors': 50, 'reg_all': 0.05, 'n_epochs': 20, 'lr_all': 0.005}
+    svd = SVD(**best_hyperparams)
     train_set = data.build_full_trainset()
     svd.fit(train_set)
 
@@ -84,7 +85,7 @@ async def predict(recommendation_request: RecommendationRequest):
     result_content = result_content[~result_content['tmdb_id'].isin(favorite_movies)]
 
     # Calculate score_content:
-    alpha = 0.1  # Remplacez cela par la valeur choisi d'alpha
+    alpha = 0.1  # Poids pour les valeurs en doublon
 
     result_content = result_content.groupby('tmdb_id').agg({'score': 'sum', 'tmdb_id': 'count'})
     result_content = result_content.rename(columns={'tmdb_id': 'count_duplicates'})
@@ -108,7 +109,7 @@ async def predict(recommendation_request: RecommendationRequest):
     result.sort_values(by='final_score', ascending=False, inplace=True)
     result = result.loc[:,['tmdb_id', 'final_score']]
     
-        
+    
     return result.to_dict(orient='records')
 
 

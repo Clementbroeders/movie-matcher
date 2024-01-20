@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import random
 
 
 ### CONFIGURATION ###
@@ -37,10 +38,7 @@ if 'recommended_movies' not in st.session_state:
     st.session_state.recommended_movies = None
     st.session_state.recommandation = False
     st.session_state.filtered_recommended_movies = None
-    
-if 'filtered_tmdb_providers' not in st.session_state:
-    st.session_state.filtered_tmdb_providers = tmdb_providers.copy()
-    
+        
 if 'selected_filters_streaming' not in st.session_state:
     st.session_state.selected_filters_streaming = {}
     
@@ -57,7 +55,10 @@ def apply_filters(df, filters):
             if filter_values:
                 try:
                     filtered_df[filter_name] = filtered_df[filter_name].fillna('')
-                    filter_conditions = [filtered_df[filter_name].str.contains(value, case=False) for value in filter_values]
+                    if filter_name == 'watch_providers':
+                        filter_conditions = [filtered_df[filter_name].str.contains(fr'\b{value}\b', case=True) for value in filter_values]
+                    else:
+                        filter_conditions = [filtered_df[filter_name].str.contains(value, case=False) for value in filter_values]
                     combined_condition = pd.concat(filter_conditions, axis=1).any(axis=1)
                     filtered_df = filtered_df[combined_condition]
                 except AttributeError:
@@ -81,13 +82,18 @@ def calculate_column_ratios(nb_rows):
 
 
 ### HEADER ###
+image_paths = {
+    'light': "img/light.jpg",
+    'dark': "img/dark.jpg"
+}
+random_theme_mode = random.choice(['light', 'dark'])
+
 left_col, center_col, right_col = st.columns([1, 1, 1])
-image_path = "img/dark.jpg"
 with center_col: 
-    st.image(image_path, use_column_width="auto")
+    st.image(image_paths[random_theme_mode], use_column_width="auto")
 
 
-### APP ###
+### APPLICATION ###
 
 ## INTRODUCTION ###
 st.markdown("""
@@ -126,7 +132,6 @@ for i, column in enumerate(columns):
     selected_movies.append({"id": movie_id, "title": movie})
 
 st.markdown("")
-st.markdown("")
 
 ## Bouton recommandations ##
 columns = st.columns([2, 1, 2])
@@ -143,8 +148,8 @@ if button_recommandations:
             </div>
         """, unsafe_allow_html=True)
     else:
-        url = 'http://docker-fastapi-1:4000/predict'
-        # url = 'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict'
+        # url = 'http://docker-fastapi-1:4000/predict'
+        url = 'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict'
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
         data = {'favorite_movies': selected_movies_list}
         response = requests.post(url, headers=headers, json=data)
@@ -160,7 +165,6 @@ if st.session_state.recommandation:
             <p style="font-size: 1.2rem;">Les recommandations ont été générées.</p>
         </div>
     """, unsafe_allow_html=True)
-    st.dataframe(st.session_state.recommended_movies)
     
 st.markdown("---")
 
@@ -183,17 +187,19 @@ if st.session_state.recommandation:
     filters_year = st.session_state.recommended_movies['year'].sort_values(ascending = False).unique()
     filters_cast = st.session_state.recommended_movies['cast'].dropna().str.split(',').explode('cast').str.strip().sort_values().unique()
     filters_director = st.session_state.recommended_movies['director'].sort_values().unique()
+    filters_streaming = tmdb_providers[tmdb_providers['provider_id'].astype(str).isin(
+        st.session_state.recommended_movies['watch_providers'].dropna().str.split(',').explode('watch_providers').str.strip().unique()
+        )]['provider_name'].sort_values()
     
 else:
-    filters_genres = st.session_state.filtered_tmdb_content['genres'].str.split(',').explode('genres').str.strip().sort_values().unique() 
-    filters_keywords = st.session_state.filtered_tmdb_content['keywords'].dropna().str.split(',').explode('keywords').str.strip().sort_values().unique()
-    filters_year = st.session_state.filtered_tmdb_content['year'].sort_values(ascending = False).unique()
-    filters_cast = st.session_state.filtered_tmdb_content['cast'].dropna().str.split(',').explode('cast').str.strip().sort_values().unique()
-    filters_director = st.session_state.filtered_tmdb_content['director'].sort_values().unique()
-
-filters_streaming = st.session_state.filtered_tmdb_providers['provider_name'].sort_values().unique()
-
-## Filtres column 1 ##
+    filters_genres = tmdb_content['genres'].str.split(',').explode('genres').str.strip().sort_values().unique() 
+    filters_keywords = tmdb_content['keywords'].dropna().str.split(',').explode('keywords').str.strip().sort_values().unique()
+    filters_year = tmdb_content['year'].sort_values(ascending = False).unique()
+    filters_cast = tmdb_content['cast'].dropna().str.split(',').explode('cast').str.strip().sort_values().unique()
+    filters_director = tmdb_content['director'].sort_values().unique()
+    filters_streaming = tmdb_providers[tmdb_providers['provider_id'].astype(str).isin(
+        tmdb_content['watch_providers'].dropna().str.split(',').explode('watch_providers').str.strip().unique()
+        )]['provider_name'].sort_values()
 
 columns = st.columns(3)
 with columns[0]:
@@ -203,7 +209,6 @@ with columns[0]:
         </div>
     """, unsafe_allow_html=True)
     st.session_state.selected_filters['genres'] = st.multiselect('Sélectionnez le(s) genre(s)', filters_genres, key = 'filter_genres')
-    st.write("List : selected_options_genres", st.session_state.selected_filters['genres'])
     
 with columns[1]:
     st.markdown("""
@@ -212,7 +217,6 @@ with columns[1]:
         </div>
     """, unsafe_allow_html=True)
     st.session_state.selected_filters['keywords'] = st.multiselect('Sélectionnez le(s) mot(s)-clé(s)', filters_keywords, key = "filter_keywords")
-    st.write("List : selected_options_keywords", st.session_state.selected_filters['keywords'])
     
 with columns[2]:
     st.markdown("""
@@ -221,9 +225,7 @@ with columns[2]:
         </div>
     """, unsafe_allow_html=True)
     st.session_state.selected_filters['year'] = st.multiselect('Sélectionnez l\'année ou les années', filters_year, key = "filter_year")
-    st.write("List : selected_options_year", st.session_state.selected_filters['year'])
 
-st.markdown("")
 st.markdown("")
 
 ## Filtres column 2 ##
@@ -236,7 +238,6 @@ with columns[0]:
         </div>
     """, unsafe_allow_html=True)
     st.session_state.selected_filters['cast'] = st.multiselect('Sélectionnez le(s) acteur(s)', filters_cast, key = "filter_cast")
-    st.write("List : selected_options_cast", st.session_state.selected_filters['cast'])
     
 with columns[1]:
     st.markdown("""
@@ -245,7 +246,6 @@ with columns[1]:
         </div>
     """, unsafe_allow_html=True)
     st.session_state.selected_filters['director'] = st.multiselect('Sélectionnez le réalisateur', filters_director, key = "filter_director")
-    st.write("List : selected_options_director", st.session_state.selected_filters['director'])
     
 with columns[2]:
     st.markdown("""
@@ -253,17 +253,10 @@ with columns[2]:
             <p style="font-size: 1.2rem;">Plateformes de streaming</p>
         </div>
     """, unsafe_allow_html=True)
-    st.session_state.selected_filters_streaming = st.multiselect('Sélectionnez le(s) plateforme(s) de streaming', filters_streaming, key = "filter_streaming")
-    st.write("List : selected_options_streaming", st.session_state.selected_filters_streaming)
+    st.session_state.selected_filters['watch_providers'] = st.multiselect('Sélectionnez le(s) plateforme(s) de streaming', filters_streaming, key = "filter_streaming")
+    st.session_state.selected_filters['watch_providers'] = tmdb_providers[tmdb_providers['provider_name'].isin(st.session_state.selected_filters['watch_providers'])]['provider_id'].astype(str).tolist()
     
-    
-## Application des filtres ##
-
-st.write("st.session_state.selected_filters", st.session_state.selected_filters)
-
 st.markdown("")
-st.markdown("")
-
 st.markdown("---")
 
 
@@ -278,19 +271,20 @@ if button_affichage:
         if st.session_state.selected_filters or all(not st.session_state.selected_filters[key] for key in st.session_state.selected_filters):
             st.session_state.filtered_recommended_movies = apply_filters(st.session_state.recommended_movies, st.session_state.selected_filters)
             nb_rows = len(st.session_state.filtered_recommended_movies)
-            st.dataframe(st.session_state.filtered_recommended_movies)
-            st.write('st.session_state.recommandation', st.session_state.recommandation)
+            
+        data_affichage = st.session_state.filtered_recommended_movies
 
     elif not st.session_state.recommandation:
         if st.session_state.selected_filters or all(not st.session_state.selected_filters[key] for key in st.session_state.selected_filters):
             st.session_state.filtered_tmdb_content = apply_filters(tmdb_content, st.session_state.selected_filters)
             nb_rows = len(st.session_state.filtered_tmdb_content)
-            st.write('st.session_state.recommandation tmdb with filter', st.session_state.recommandation)
+
         else:
             nb_rows = len(st.session_state.filtered_tmdb_content)
-            st.write('st.session_state.recommandation tmdb without filter', st.session_state.recommandation)
             
-    ## Affichage films recommandes ##
+        data_affichage = st.session_state.filtered_tmdb_content
+            
+    ## Affichage films recommandés ##
     if nb_rows == 0:
         st.markdown("""
             <div style='text-align:center;'>
@@ -308,9 +302,7 @@ if button_affichage:
         """, unsafe_allow_html=True)
 
         st.markdown("")
-        
-        poster_url_begin = "https://image.tmdb.org/t/p/w500/"
-        
+                
         ## Affichage titre films ##
         if nb_rows >= 5:
             columns = st.columns(5)
@@ -322,9 +314,9 @@ if button_affichage:
         for i in columns_range:
             col = columns[i]
             if nb_rows >= 5:
-                movie_name = st.session_state.filtered_recommended_movies['title'][i]
+                movie_name = data_affichage['title'][i]
             else:
-                movie_name = st.session_state.filtered_recommended_movies['title'][i-1]
+                movie_name = data_affichage['title'][i-1]
             col.markdown(f"""
                 <div style='text-align:center;'>
                     <p style="font-size: 1rem;">{movie_name}</p>
@@ -332,6 +324,8 @@ if button_affichage:
             """, unsafe_allow_html=True)
         
         ## Affichage posters films ##
+        poster_url_begin = "https://image.tmdb.org/t/p/w500/"
+        
         if nb_rows >= 5:
             columns = st.columns(5)
             columns_range = [i for i in range(0, 5)]
@@ -342,9 +336,9 @@ if button_affichage:
         for i in columns_range:
             col = columns[i]
             if nb_rows >= 5:
-                full_poster_url = poster_url_begin + st.session_state.filtered_recommended_movies['poster_path'][i]
+                full_poster_url = poster_url_begin + data_affichage['poster_path'][i]
             else:
-                full_poster_url = poster_url_begin + st.session_state.filtered_recommended_movies['poster_path'][i-1]
+                full_poster_url = poster_url_begin + data_affichage['poster_path'][i-1]
             col.image(full_poster_url, use_column_width="auto")
             
         ## Affichage streaming films ##
@@ -362,11 +356,43 @@ if button_affichage:
                     <p style="font-size: 1rem;">Plateforme de streaming :</p>
                 </div>
             """, unsafe_allow_html=True)
-            
+                      
             if nb_rows >= 5:
-                col.write(st.session_state.filtered_recommended_movies['watch_providers'][i])
+                cell = f'{i}'
             else:
-                col.write(st.session_state.filtered_recommended_movies['watch_providers'][i-1])
+                cell = f'{i-1}'
+                
+            cell = int(cell)
+            watch_providers = data_affichage['watch_providers'][cell]
+            
+            try:
+                providers_list = tmdb_providers[tmdb_providers['provider_id'].astype(int).isin([int(provider_id.strip('"')) for provider_id in watch_providers.split(',')])]['provider_name'].to_list()
+                providers = ''
+                for provider in providers_list:
+                    providers += "- " + provider + "\n"
+                col.markdown(providers)
+                
+            except AttributeError:
+                if pd.isna(watch_providers):
+                    col.markdown(f"""
+                        <div style='text-align:center;'>
+                            <p style="font-size: 1rem;">Aucun streaming en abonnement disponible</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    providers_list = tmdb_providers[tmdb_providers['provider_id'].astype(int) == int(watch_providers)]['provider_name'].to_list()
+                    providers = ''
+                    for provider in providers_list:
+                        providers += "- " + provider + "\n"
+                    col.markdown(providers)
+                    
+            except Exception as e:
+                col.markdown(f"""
+                    <div style='text-align:center;'>
+                        <p style="font-size: 1rem;">Aucun streaming en abonnement disponible</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
 
 st.markdown("---")
 
@@ -374,6 +400,6 @@ st.markdown("---")
 ### FOOTER ###
 st.markdown("""
     <p style='text-align:center;'>
-        Powered by <a href='https://streamlit.io/'>Streamlit</a> & <a href='https://www.justwatch.com/'>JustWatch</a>
+        Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>. © 2024 Movie Matcher.
     </p>
 """, unsafe_allow_html=True)

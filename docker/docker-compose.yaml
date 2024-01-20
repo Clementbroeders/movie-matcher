@@ -3,25 +3,25 @@ version: '3'
 services:
   fastapi:
     build:
-      context: ./FASTAPI
+      context: ./fastapi
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
     networks:
       - my-network
     volumes:
-      - "./FASTAPI:/home/app"
+      - "./fastapi:/home/app"
 
   streamlit:
     build:
-      context: ./STREAMLIT
+      context: ./streamlit
       dockerfile: Dockerfile
     ports:
       - "8501:8501"
     networks:
       - my-network
     volumes:
-      - "./STREAMLIT:/home/app"
+      - "./streamlit:/home/app"
 
 networks:
   my-network:

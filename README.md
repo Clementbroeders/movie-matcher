@@ -1,6 +1,20 @@
-# MOVIE MATCHER
+# MOVIE MATCHER - Moteur de recommandation de films
 
-## Notebooks :
+<img src="img/dark.jpg" alt="Image" width="50%" height="50%">
+
+## Introduction
+
+Introduction
+
+---
+
+## Schéma des flux
+
+<img src="img/schema.png" alt="Schéma" width="50%" height="50%">
+
+---
+
+## Notebooks
 
 1) `01_TMDB_API_movie_vote.ipynb` : Télécharge le daily export de TMDB, filtre sur les `n` films les plus populaires, puis se connecte à l'API TMDB pour récupérer par film le nombre de votes et la moyenne des votes. Ensuite enregistre dans le fichier `src/TMDB_movie_vote.csv`. 
 
@@ -29,7 +43,7 @@
 
 ---
 
-## Nos formules mathématiques :
+## Nos formules mathématiques
 
 1) Weighted IMDB score :
 
@@ -55,7 +69,7 @@
     - $\alpha$ est un paramètre de réglage.
 
 
-## Instructions si aucun fichier n'est présent dans `src/` :
+## Instructions si aucun fichier n'est présent dans `src/`
 
 1) Telecharger le dataset MovieLens : [Movielens dataset](https://files.grouplens.org/datasets/movielens/ml-latest.zip)
 
