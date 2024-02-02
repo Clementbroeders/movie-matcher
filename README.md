@@ -5,10 +5,25 @@
     <img src="img/dark.jpg" alt="Image" width="50%" height="50%">
 </p>
 
-
 ## Introduction
 
-Movie Matcher est un moteur de recommandation de films...
+Découvrez une expérience cinématographique personnalisée avec Movie Matcher, notre moteur de recommandation de films intégré à Streamlit. Sélectionnez entre 1 et 5 films que vous avez appréciés, et laissez notre modèle de machine learning utiliser à la fois le filtrage collaboratif et le contenu pour vous suggérer des films similaires. 
+
+Explorez des recommandations adaptées à vos goûts, et obtenez des informations détaillées sur la disponibilité des films sur différentes plateformes avec abonnement.
+
+Utilisez des filtres avancés tels que mots-clés, genres, acteurs, réalisateurs, année, et plateformes de streaming pour affiner vos choix et trouver votre prochaine pépite cinématographique.
+
+---
+
+## Accès au site
+
+Vous pouvez accéder au site Movie Matcher depuis le lien suivant :
+
+[Movie Matcher](www.streamlit.io)
+
+Vous pouvez accéder à la documentation de l'API au lien suivant :
+
+[API docs](https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs)
 
 ---
 
@@ -20,49 +35,75 @@ Movie Matcher est un moteur de recommandation de films...
 
 ---
 
-## Notebooks
+Clone du repo
 
-1) `01_TMDB_API_movie_vote.ipynb` : Télécharge le daily export de TMDB, filtre sur les `n` films les plus populaires, puis se connecte à l'API TMDB pour récupérer par film le nombre de votes et la moyenne des votes. Ensuite enregistre dans le fichier `src/TMDB_movie_vote.csv`. 
+Pour cloner le repo, utilisez la commande suivante :
 
-    Actuellement le fichier contient 20.000 films.
+git clone https://github.com/Clementbroeders/movie-matcher.git
 
-    Temps de traitement : ~ 2h pour 20.000 films.
+---
 
+## Déploiement local
 
-2) `02_weighted_IMDB.ipynb` : Parmi les films de `src/TMDB_movie_vote.csv`, applique la formule weighted ratings de IMDB et déduit une liste de `n` films les mieux notés. Ensuite enregistre dans le fichier `src/TMDB_weighted_movies.csv`. De plus, importe `Movielens_links.csv` et `Movielens_ratings.csv`, filtre sur les films sélectionnés, puis effectue un sample pour limiter la taille du dataset. Enregistre les infos dans le fichier `src/Movielens_ratings_updated.csv`.
+Si vous souhaitez déployer l'application en local, vous pouvez choisir parmi une des étapes suivantes :
 
-    Actuellement notre weighted IMDB conserve 3000 films.
+1) Déployer Streamlit + FastAPI
 
+    Il faut simplement lancer la commande `docker-compose up`
 
-3) `03_TMDB_API_content.ipynb` : Parmi les films de `src/TMDB_weighted_movies.csv`, se connecte à l'API TMDB pour récupérer, par film, les données suivantes :
-    - TMDB/movie/details : tmdb_id, title, genres, release_date (year), poster_path
-    - TMDB/movie/keywords : tmdb_id, keywords
-    - TMDB/movie/credits : tmdb_id, cast (acteurs), director
-    - TMDB/movie/watch/providers : tmdb_id, provider_id
+    Les sites seront accessibles aux liens :
 
-    Temps de traitement : ~ 20 min pour 3000 films.
+    - [Streamlit](http://localhost:8501) : `http://localhost:8501`
 
+    - [FastAPI](http://localhost:4000/docs) : `http://localhost:4000`
 
-4) `04_collaborative_filtering.ipynb` : Défini la fonction de recommandation (collaborative filtering) à partir de la librairie Suprise et du modèle SVD, puis la teste sur une liste de films.
+2) Deployer Streamlit uniquement
 
-    Idéalement conserver entre 200.000 et 500.000 ratings (voir `02_weighted_IMDB.ipynb`).
+    Il faut lancer les 2 commandes suivantes :
+
+    - Build l'image : `docker build -t movie-matcher-streamlit .`
+
+    - Run le container : `docker run -it -v "$(pwd):/home/app" -p 8501:8501 movie-matcher-streamlit`
+
+    Le streamlit sera accessible au lien :
+
+    [Streamlit](http://localhost:8501) : `http://localhost:8501`
+
+3) Deployer FastAPI uniquement
+
+    Readme disponible dans le dossier suivant : [/fastapi](fastapi)
+
+---
+
+## Scripts
+
+Les scripts sont utilisés pour générer les fichiers nécessaire au fonctionnement du dashboard et de l'API. Ils sont disponibles au répertoire `scripts/`
+
+1) `scripts/script_tmdb_api.py` : connexion à l'API de TMDB, téléchargement des 20.000 films les plus populaires. Récupération de toutes les données importantes et création des fichiers `fastapi/src/TMDB_content.csv` et `fastapi/src/TMDB_providers.csv`
+
+2) `scripts/script_imdb_rating.py` : téléchargement des fichiers MovieMatcher, application de la formule du score IMDB et du filtre sur les films, mise à jour du fichier `fastapi/src/TMDB_content.csv` puis création du fichier `fastapi/src/Movielens_ratings_updated.csv` pour le filtrage collaboratif.
+
+3) `scripts/script_tmdb_content_based.py` : application du machine learning (matrice TF-IDF, similarité cosinus), puis création du fichier `fastapi/src/TMDB_content_based.csv`
 
 ---
 
 ## Nos formules mathématiques
 
-1) Weighted IMDB score :
+1) Formule du score IMDB (ou weighted IMDB ratings) :
 
-    $\text{Score} = \left( \frac{v}{v+m} \cdot R \right) + \left( \frac{m}{m+v} \cdot C \right)$
+    Cette formule de score IMDB permet d'appliquer un score selon des critères. Cette formule a été développé
 
+    $\text{Score IMDB} = \frac{R \cdot v + C \cdot M}{v + m}$
+    
     **Où :**
     - $v$ est le nombre de votes pour le film
     - $m$ est le nombre minimum de votes requis pour figurer dans le classement
     - $R$ est la note moyenne du film
     - $C$ est la moyenne des votes au global
 
+<br>
 
-2) Hybrid system score :
+2) Formule du **score hybride Movie Matcher** :
 
     $Score_{film} = w_{CF} * S_{CF} + w_{CB} * (\frac{\sum_{i=1}^{n} S_{CB_i}}{n} + \alpha * n)$
 
@@ -73,20 +114,3 @@ Movie Matcher est un moteur de recommandation de films...
     - $S_{CB_i}$ est le score de similarité content-based pour la \(i\)-ième occurrence du film,
     - $n$ est le nombre d'occurrences du film dans les prédictions du modèle content-based,
     - $\alpha$ est un paramètre de réglage.
-
-
-## Instructions si aucun fichier n'est présent dans `src/`
-
-1) Telecharger le dataset MovieLens : [Movielens dataset](https://files.grouplens.org/datasets/movielens/ml-latest.zip)
-
-2) Deziper l'archive
-
-    Renommer : `ratings.csv` en `Movielens_ratings.csv`
-
-    Renommer : `links.csv` en `Movielens_links.csv`
-
-    Mettre les fichiers dans `src/`
-
-3) Lancez les notebooks `01`, `02` et `03` pour créer les fichiers nécessaires au machine learning
-
-    Le fichier `Movielens_ratings.csv` (qui prend beaucoup de place) sera supprimé et remplacé par `Movielens_ratings_updated.csv`
