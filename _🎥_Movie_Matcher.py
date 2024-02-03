@@ -507,7 +507,12 @@ st.markdown("---")
 
 ### FOOTER ###
 st.markdown("""
-    <p style='text-align:center;'>
-        Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>. © 2024 Movie Matcher.
-    </p>
+    <div style='text-align:center;'>
+        <p>
+            Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>
+        </p>
+        <p>
+            Voir le code source sur <a href='https://github.com/Clementbroeders/movie-matcher'>GitHub</a>. © 2024 Movie Matcher.
+        </p>
+    </div>
 """, unsafe_allow_html=True)

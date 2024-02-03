@@ -17,11 +17,13 @@ Utilisez des filtres avancés tels que mots-clés, genres, acteurs, réalisateur
 
 ## Accès au site
 
-Vous pouvez accéder au site Movie Matcher depuis le lien suivant :
+Vous pouvez accéder au site **Movie Matcher** depuis le lien suivant :
 
-[Movie Matcher](www.streamlit.io)
+[Movie Matcher](https://moviematcher.streamlit.app/)
 
-Vous pouvez accéder à la documentation de l'API au lien suivant :
+<br>
+
+Vous pouvez accéder à la **documentation de l'API** au lien suivant :
 
 [API docs](https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs)
 
