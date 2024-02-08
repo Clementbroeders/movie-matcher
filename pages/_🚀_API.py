@@ -24,7 +24,8 @@ st.markdown("---")
 ### FASTAPI ###
 success = False
 try:
-    api_urls = ['http://moviematcher-fastapi-1:4000/predict',
+    api_urls = ['http://moviematcher-fastapi-1:4000/docs',
+                'https://moviematcher-fastapi.onrender.com/docs',
                 'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs']
     for api_url in api_urls:
         try:

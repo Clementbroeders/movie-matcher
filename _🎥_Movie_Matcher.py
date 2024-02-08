@@ -246,6 +246,7 @@ if button_recommandations:
         success = False
         try:
             api_urls = ['http://moviematcher-fastapi-1:4000/predict',
+                        'https://moviematcher-fastapi.onrender.com/predict',
                         'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict']
             headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
             for api_url in api_urls:
