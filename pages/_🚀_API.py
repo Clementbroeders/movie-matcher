@@ -1,6 +1,6 @@
 ### LIBRAIRIES ###
 import streamlit as st
-
+import requests
 
 ### CONFIGURATION ###
 st.set_page_config(
@@ -22,26 +22,30 @@ st.markdown("---")
 
 
 ### FASTAPI ###
-success = False
-try:
-    api_urls = ['http://moviematcher-fastapi-1:4000/docs',
-                'https://moviematcher-fastapi.onrender.com/docs',
-                'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs']
-    for api_url in api_urls:
-        try:
-            response = requests.get(api_url)
-            if response.status_code == 200:
-                st.markdown(f'<iframe src="{fastapi_url}" width = "100%" height = 1000 style = "border: none;"></iframe>', unsafe_allow_html=True)
-                success = True 
-                break
-        except requests.RequestException as e:
-            pass
-except Exception as e:
-    pass
-if not success:
+available_link = False
+api_urls = [
+    'http://movie-matcher-fastapi-1:4000',
+    'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs',
+    'https://moviematcher-fastapi.onrender.com/docs',
+]
+for api_url in api_urls:
+    try:
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            if api_url == 'http://movie-matcher-fastapi-1:4000':
+                available_link = 'http://localhost:4000/docs'
+            else:
+                available_link = api_url
+            break
+    except requests.RequestException as e:
+        pass
+
+if available_link:
+    st.markdown(f'<iframe src="{available_link}" width="100%" height="1000" style="border: none;"></iframe>', unsafe_allow_html=True)
+else:
     st.markdown("""
         <p style='text-align:center;'>
-            Nous ne parvenons pas à accéder à l'API. Veuillez réessayer ultérieurement.
+            Nous ne parvenons pas à accéder à l'API. Veuillez rafraichir la page ou réessayer ultérieurement.
         </p>
     """, unsafe_allow_html=True)
 

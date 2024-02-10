@@ -245,9 +245,11 @@ if button_recommandations:
         data = {'favorite_movies': selected_movies_list}
         success = False
         try:
-            api_urls = ['http://moviematcher-fastapi-1:4000/predict',
-                        'https://moviematcher-fastapi.onrender.com/predict',
-                        'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict']
+            api_urls = [
+                'http://movie-matcher-fastapi-1:4000/predict',
+                'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict',
+                # 'https://moviematcher-fastapi.onrender.com/predict'
+            ]
             headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
             for api_url in api_urls:
                 try:

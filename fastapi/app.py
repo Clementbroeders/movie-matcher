@@ -16,7 +16,7 @@ ratings_updated = pd.read_csv('src/Movielens_ratings_updated.csv')
 content_based = pd.read_csv('src/TMDB_content_based.csv')
 
 
-### FONCTIONS ###
+### CLASS ###
 class RecommendationRequest(BaseModel):
     favorite_movies: list
 
