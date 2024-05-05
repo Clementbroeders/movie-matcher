@@ -25,7 +25,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install schedule requests pandas scikit-learn spacy  # Ajoutez le module schedule pour la planification
+        pip install schedule requests pandas scikit-learn spacy
+        python -m spacy download en_core_web_sm
     - name: Run script_tmdb_api.py
       run: |
         python scripts/script_tmdb_api.py
