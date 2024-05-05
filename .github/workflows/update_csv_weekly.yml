@@ -26,15 +26,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install schedule requests pandas scikit-learn spacy  # Ajoutez le module schedule pour la planification
-    - name: Run scripts/script_tmdb_api.py
+    - name: Run script_tmdb_api.py
       run: |
-        python script_tmdb_api.py
-    - name: Run scripts/script_imdb_rating.py
+        python scripts/script_tmdb_api.py
+    - name: Run script_imdb_rating.py
       run: |
-        python script_imdb_rating.py
-    - name: Run scripts/script_tmdb_content_based.py
+        python scripts/script_imdb_rating.py
+    - name: Run script_tmdb_content_based.py
       run: |
-        python script_tmdb_content_based.py
+        python scripts/script_tmdb_content_based.py
     - name: Commit and push changes
       run: |
         git config --local user.email "action@github.com"
