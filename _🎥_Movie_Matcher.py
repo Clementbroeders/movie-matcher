@@ -247,8 +247,7 @@ if button_recommandations:
         try:
             api_urls = [
                 'http://movie-matcher-fastapi-1:4000/predict',
-                'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/predict',
-                # 'https://moviematcher-fastapi.onrender.com/predict'
+                # 'https://moviematcher-fastapi.onrender.com/predict' # API très lente (+ de 20 secondes)
             ]
             headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
             for api_url in api_urls:

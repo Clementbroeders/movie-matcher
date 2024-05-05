@@ -2,25 +2,38 @@
 import pandas as pd
 import requests
 import zipfile
+from datetime import datetime
 from io import BytesIO, StringIO
 import os
 import warnings
 warnings.filterwarnings("ignore")
 
 
+### FONCTION PRINT ###
+def print_with_timestamp(message):
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    print(f"{timestamp} {message}")
+
 ### PATHS ###
 path = os.getcwd()
 project_path = os.path.abspath(os.path.join(path, '..'))
+src_dir = os.path.join(project_path, 'fastapi', 'src')
+
+if not os.path.exists(src_dir):
+    os.makedirs(src_dir)
+    print_with_timestamp('Le répertoire src a été créé avec succès.')
+else:
+    print_with_timestamp('Le répertoire src existe déjà.')
 
 
 ### FONCTIONS ###
 
 def download_movielens_data():
-    print('Téléchargement des données MovieLens 25m en cours...')
+    print_with_timestamp('Téléchargement des données MovieLens 25m en cours...')
     url_movielens = 'https://files.grouplens.org/datasets/movielens/ml-25m.zip'
     response = requests.get(url_movielens)
     if response.status_code == 200:
-        print('Données MovieLens 25m téléchargées avec succès')
+        print_with_timestamp('Données MovieLens 25m téléchargées avec succès')
         with zipfile.ZipFile(BytesIO(response.content), 'r') as zip_ref:
             zip_file_list = zip_ref.namelist()
             for csv_file_name in zip_file_list:
@@ -28,14 +41,14 @@ def download_movielens_data():
                     with zip_ref.open(csv_file_name) as csv_file:
                         csv_data = csv_file.read().decode('utf-8')
                         movielens_links = pd.read_csv(StringIO(csv_data))
-                        print(f"Données chargées avec succès depuis {csv_file_name} en dataframe movielens_links")
+                        print_with_timestamp(f"Données chargées avec succès depuis {csv_file_name} en dataframe movielens_links")
                 elif csv_file_name == 'ml-25m/ratings.csv':
                     with zip_ref.open(csv_file_name) as csv_file:
                         csv_data = csv_file.read().decode('utf-8')
                         movielens_ratings = pd.read_csv(StringIO(csv_data))
-                        print(f"Données chargées avec succès depuis {csv_file_name} en dataframe movielens_ratings")
+                        print_with_timestamp(f"Données chargées avec succès depuis {csv_file_name} en dataframe movielens_ratings")
     else:
-        print(f"Échec du téléchargement du fichier. Statut : {response.status_code}")
+        print_with_timestamp(f"Échec du téléchargement du fichier. Statut : {response.status_code}")
     
     return movielens_links, movielens_ratings
 
@@ -64,9 +77,9 @@ def application_weighted_rating(movielens_links):
     weighted_movies['score_imdb'] = weighted_movies.apply(lambda x: weighted_rating(x, m, C), axis=1)
     nombre_films = weighted_movies.shape[0]
     weighted_movies = weighted_movies.sort_values('score_imdb', ascending=False).head(nombre_films)
-    print(f'Vote average : {C}')
-    print(f'Nombre de votes minimum : {m}')
-    print(f'Nombre de films choisis : {nombre_films}')
+    print_with_timestamp(f'Vote average : {C}')
+    print_with_timestamp(f'Nombre de votes minimum : {m}')
+    print_with_timestamp(f'Nombre de films choisis : {nombre_films}')
     
     return weighted_movies
 
@@ -80,7 +93,7 @@ def update_tmdb_content(weighted_movies):
     tmdb_content = tmdb_content.drop_duplicates(subset='tmdb_id', keep='first')
     tmdb_content = tmdb_content.sort_values('score_imdb', ascending=False)
     tmdb_content.to_csv(project_path + '/fastapi/src/TMDB_content.csv', index=False)
-    print('Le fichier TMDB_content.csv a été mis à jour avec succès')
+    print_with_timestamp('Le fichier TMDB_content.csv a été mis à jour avec succès')
     return tmdb_content
 
 
@@ -106,7 +119,7 @@ def update_movielens_ratings(movielens_ratings, weighted_movies):
     movielens_ratings['userId'] = movielens_ratings['userId'].map(user_mapping)
 
     movielens_ratings.to_csv(project_path + '/fastapi/src/Movielens_ratings_updated.csv', index=False)
-    print('Le fichier movielens_ratings_updated.csv a été créé avec succès.')
+    print_with_timestamp('Le fichier movielens_ratings_updated.csv a été créé avec succès.')
 
     return movielens_ratings
 

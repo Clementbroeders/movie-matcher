@@ -8,10 +8,21 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
+### FONCTION PRINT ###
+def print_with_timestamp(message):
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    print(f"{timestamp} {message}")
 
 ### PATHS ###
 path = os.getcwd()
 project_path = os.path.abspath(os.path.join(path, '..'))
+src_dir = os.path.join(project_path, 'fastapi', 'src')
+
+if not os.path.exists(src_dir):
+    os.makedirs(src_dir)
+    print_with_timestamp('Le répertoire src a été créé avec succès.')
+else:
+    print_with_timestamp('Le répertoire src existe déjà.')
 
 
 ### FONCTIONS ###
@@ -32,12 +43,12 @@ def download_tmdb_daily(number_of_movies= 1000):
             json_data = f.read().decode('utf-8')
         tmdb_daily = pd.read_json(json_data, lines = True)
     else:
-        print(f"Failed to download the file. Status code: {response.status_code}")
+        print_with_timestamp(f"Failed to download the file. Status code: {response.status_code}")
 
     # Filter columns
     tmdb_daily = tmdb_daily.loc[:,['id', 'original_title', 'popularity']]
     tmdb_daily = tmdb_daily.sort_values(by=['popularity'], ascending=False).head(number_of_movies)
-    print(f'Le fichier tmdb_daily a été téléchargé et filtré avec {number_of_movies} films.')
+    print_with_timestamp(f'Le fichier tmdb_daily a été téléchargé et filtré avec {number_of_movies} films.')
     return tmdb_daily
 
 
@@ -56,7 +67,7 @@ def api_request(tmdb_daily, print_interval=100):
     movie_providers_list = []
     csv_providers_list = []
 
-    print('Extraction des données API TMDB en cours...')
+    print_with_timestamp('Extraction des données API TMDB en cours...')
     
     for i, movie_id in enumerate(tmdb_daily.iloc[:, 0], start=1):
         url = url_start + str(movie_id) + url_end
@@ -133,12 +144,12 @@ def api_request(tmdb_daily, print_interval=100):
                 csv_providers_list.append(provider)
             
             if i % print_interval == 0:
-                print(f"Traitement de {i} movie_id sur un total de {len(tmdb_daily.iloc[:, 0])}")    
+                print_with_timestamp(f"Traitement de {i} movie_id sur un total de {len(tmdb_daily.iloc[:, 0])}")    
                 
         else:
-            print(f"Error fetching details for movie_id: {movie_id}")
+            print_with_timestamp(f"Error fetching details for movie_id: {movie_id}")
             
-    print('Toutes les données ont été extraites avec succès.')
+    print_with_timestamp('Toutes les données ont été extraites avec succès.')
     return movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list
 
 
@@ -184,13 +195,13 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
     # Convert to CSV
     merged_df.to_csv(project_path + '/fastapi/src/TMDB_content.csv', index=False)
-    print("merged_df a été exporté et enregistré dans le répertoire src/TMDB_content.csv")
+    print_with_timestamp("merged_df a été exporté et enregistré dans le répertoire src/TMDB_content.csv")
 
     # Create dataframe df_providers_csv from movie providers and export as CSV
     df_providers_csv = pd.DataFrame(csv_providers_list)
     df_providers_csv = df_providers_csv.drop_duplicates('provider_name', keep='first')
     df_providers_csv.to_csv(project_path + '/fastapi/src/TMDB_providers.csv', index=False)
-    print("df_providers_csv a été exporté et enregistré dans le répertoire src/TMDB_providers.csv")
+    print_with_timestamp("df_providers_csv a été exporté et enregistré dans le répertoire src/TMDB_providers.csv")
     
     return merged_df, df_providers_csv
 

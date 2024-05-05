@@ -1,0 +1,5 @@
+*.pyc
+
+/fastapi/__pycache__
+
+/presentation

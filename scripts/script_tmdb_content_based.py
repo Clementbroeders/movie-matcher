@@ -2,13 +2,25 @@
 import pandas as pd
 import os
 import spacy
+from datetime import datetime
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+### FONCTION PRINT ###
+def print_with_timestamp(message):
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    print(f"{timestamp} {message}")
 
 ### PATHS ###
 path = os.getcwd()
 project_path = os.path.abspath(os.path.join(path, '..'))
+src_dir = os.path.join(project_path, 'fastapi', 'src')
+
+if not os.path.exists(src_dir):
+    os.makedirs(src_dir)
+    print_with_timestamp('Le répertoire src a été créé avec succès.')
+else:
+    print_with_timestamp('Le répertoire src existe déjà.')
 
 
 ### PREPROCESSING ###
@@ -26,7 +38,7 @@ def to_lemma(nlp, text):
 
 
 def preprocessing_content():
-    print('Preprocessing en cours ...')
+    print_with_timestamp('Preprocessing en cours ...')
     nlp = spacy.load('en_core_web_sm')
     
     tmdb_content = pd.read_csv(project_path + '/fastapi/src/TMDB_content.csv')
@@ -56,7 +68,7 @@ def preprocessing_content():
     preprocessed_content = tmdb_content.loc[:,['tmdb_id', 'soup']]
     movie_ids = pd.Series(preprocessed_content.index, index=preprocessed_content['tmdb_id']).drop_duplicates()
     
-    print('Preprocessing terminé, les données sont prêtes pour l\'application des recommandation.')
+    print_with_timestamp('Preprocessing terminé, les données sont prêtes pour l\'application des recommandation.')
     return preprocessed_content, movie_ids
 
 
@@ -64,7 +76,7 @@ def application_ml(preprocessed_content):
     count = CountVectorizer(stop_words='english')
     count_matrix = count.fit_transform(preprocessed_content['soup'])
     cosine_sim = cosine_similarity(count_matrix, count_matrix)
-    print('Matrice de similarité cosinus créée.')
+    print_with_timestamp('Matrice de similarité cosinus créée.')
     return cosine_sim
 
 
@@ -90,10 +102,10 @@ def application_recommandations(preprocessed_content):
             scores = get_recommendations(movie, cosine_sim).to_dict(orient='records')
             all_scores.append({'tmdb_id': movie, 'similarities': scores})
         except Exception as e:
-            print(f"Error for movie_id {movie}: {e}")
+            print_with_timestamp(f"Error for movie_id {movie}: {e}")
     tmdb_content_based = pd.DataFrame(all_scores)
     tmdb_content_based.to_csv(project_path + '/fastapi/src/TMDB_content_based.csv', index = False)
-    print('Recommandations basées sur le contenu créées. Le fichier TMDB_content_based.csv est disponible dans le dossier fastapi/src.')
+    print_with_timestamp('Recommandations basées sur le contenu créées. Le fichier TMDB_content_based.csv est disponible dans le dossier fastapi/src.')
     return tmdb_content_based
 
 
