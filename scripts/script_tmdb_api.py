@@ -4,7 +4,6 @@ import requests
 from datetime import datetime, timedelta
 import gzip
 from io import BytesIO
-import os
 import warnings
 warnings.filterwarnings("ignore")
 

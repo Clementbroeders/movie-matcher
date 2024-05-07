@@ -1,6 +1,5 @@
 ### LIBRAIRIES ###
 import pandas as pd
-import os
 import spacy
 from datetime import datetime
 from sklearn.feature_extraction.text import CountVectorizer
@@ -31,7 +30,10 @@ def preprocessing_content():
     print_with_timestamp('Preprocessing en cours ...')
     nlp = spacy.load('en_core_web_sm')
     
-    tmdb_content = pd.read_csv('../fastapi/src/TMDB_content.csv')
+    try:
+        tmdb_content = pd.read_csv('../fastapi/src/TMDB_content.csv')
+    except:
+        tmdb_content = pd.read_csv('fastapi/src/TMDB_content.csv')
     tmdb_content = tmdb_content.loc[:,['tmdb_id', 'title', 'genres', 'keywords', 'director', 'cast']]
     keyword_counts = tmdb_content['keywords'].str.split(',').explode('keywords').value_counts().loc[lambda x: x > 1]
 
@@ -93,7 +95,10 @@ def application_recommandations(preprocessed_content):
         except Exception as e:
             print_with_timestamp(f"Error for movie_id {movie}: {e}")
     tmdb_content_based = pd.DataFrame(all_scores)
-    tmdb_content_based.to_csv('../fastapi/src/TMDB_content_based.csv', index = False)
+    try:
+        tmdb_content_based.to_csv('../fastapi/src/TMDB_content_based.csv', index = False)
+    except:
+        tmdb_content_based.to_csv('fastapi/src/TMDB_content_based.csv', index = False)
     print_with_timestamp('Recommandations basées sur le contenu créées. Le fichier TMDB_content_based.csv est disponible dans le dossier fastapi/src.')
     return tmdb_content_based
 
