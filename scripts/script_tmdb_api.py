@@ -8,21 +8,11 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
+
 ### FONCTION PRINT ###
 def print_with_timestamp(message):
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     print(f"{timestamp} {message}")
-
-### PATHS ###
-path = os.getcwd()
-project_path = os.path.abspath(os.path.join(path, '..'))
-src_dir = os.path.join(project_path, 'fastapi', 'src')
-
-if not os.path.exists(src_dir):
-    os.makedirs(src_dir)
-    print_with_timestamp('Le répertoire src a été créé avec succès.')
-else:
-    print_with_timestamp('Le répertoire src existe déjà.')
 
 
 ### FONCTIONS ###
@@ -194,13 +184,13 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
 
     # Convert to CSV
-    merged_df.to_csv(project_path + '/fastapi/src/TMDB_content.csv', index=False)
+    merged_df.to_csv('../fastapi/src/TMDB_content.csv', index=False)
     print_with_timestamp("merged_df a été exporté et enregistré dans le répertoire src/TMDB_content.csv")
 
     # Create dataframe df_providers_csv from movie providers and export as CSV
     df_providers_csv = pd.DataFrame(csv_providers_list)
     df_providers_csv = df_providers_csv.drop_duplicates('provider_name', keep='first')
-    df_providers_csv.to_csv(project_path + '/fastapi/src/TMDB_providers.csv', index=False)
+    df_providers_csv.to_csv('../fastapi/src/TMDB_providers.csv', index=False)
     print_with_timestamp("df_providers_csv a été exporté et enregistré dans le répertoire src/TMDB_providers.csv")
     
     return merged_df, df_providers_csv
@@ -208,7 +198,7 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
 ### LANCEMENT DU SCRIPT ###
 
-tmdb_daily = download_tmdb_daily(number_of_movies=20000)
+tmdb_daily = download_tmdb_daily(number_of_movies=100)
 
 movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 

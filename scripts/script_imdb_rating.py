@@ -14,17 +14,6 @@ def print_with_timestamp(message):
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     print(f"{timestamp} {message}")
 
-### PATHS ###
-path = os.getcwd()
-project_path = os.path.abspath(os.path.join(path, '..'))
-src_dir = os.path.join(project_path, 'fastapi', 'src')
-
-if not os.path.exists(src_dir):
-    os.makedirs(src_dir)
-    print_with_timestamp('Le répertoire src a été créé avec succès.')
-else:
-    print_with_timestamp('Le répertoire src existe déjà.')
-
 
 ### FONCTIONS ###
 
@@ -61,7 +50,7 @@ def weighted_rating(x, m, C):
 
 def application_weighted_rating(movielens_links):
     # Chargement des données
-    tmdb_content = pd.read_csv(project_path + '/fastapi/src/TMDB_content.csv')
+    tmdb_content = pd.read_csv('../fastapi/src/TMDB_content.csv')
     tmdb_content = pd.merge(tmdb_content, movielens_links, left_on='tmdb_id', right_on='tmdbId', how='left')
     tmdb_content = tmdb_content.loc[:,['tmdb_id', 'movieId', 'vote_count', 'vote_average']]
     tmdb_content.rename(columns={'movieId' : 'movielens_id'}, inplace=True)
@@ -85,14 +74,14 @@ def application_weighted_rating(movielens_links):
 
 
 def update_tmdb_content(weighted_movies):
-    tmdb_content = pd.read_csv(project_path + '/fastapi/src/TMDB_content.csv')
+    tmdb_content = pd.read_csv('../fastapi/src/TMDB_content.csv')
     if 'score_imdb' in tmdb_content.columns:
         tmdb_content = tmdb_content.drop('score_imdb', axis=1)
     weighted_movies = weighted_movies.loc[:, ['tmdb_id', 'score_imdb']]
     tmdb_content = pd.merge(weighted_movies, tmdb_content, on='tmdb_id', how='left')
     tmdb_content = tmdb_content.drop_duplicates(subset='tmdb_id', keep='first')
     tmdb_content = tmdb_content.sort_values('score_imdb', ascending=False)
-    tmdb_content.to_csv(project_path + '/fastapi/src/TMDB_content.csv', index=False)
+    tmdb_content.to_csv('../fastapi/src/TMDB_content.csv', index=False)
     print_with_timestamp('Le fichier TMDB_content.csv a été mis à jour avec succès')
     return tmdb_content
 
@@ -118,7 +107,7 @@ def update_movielens_ratings(movielens_ratings, weighted_movies):
     user_mapping = {old_id: new_id for new_id, old_id in enumerate(movielens_ratings['userId'].unique(), start=1)}
     movielens_ratings['userId'] = movielens_ratings['userId'].map(user_mapping)
 
-    movielens_ratings.to_csv(project_path + '/fastapi/src/Movielens_ratings_updated.csv', index=False)
+    movielens_ratings.to_csv('../fastapi/src/Movielens_ratings_updated.csv', index=False)
     print_with_timestamp('Le fichier movielens_ratings_updated.csv a été créé avec succès.')
 
     return movielens_ratings

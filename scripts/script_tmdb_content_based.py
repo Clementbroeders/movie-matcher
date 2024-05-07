@@ -6,21 +6,11 @@ from datetime import datetime
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 ### FONCTION PRINT ###
 def print_with_timestamp(message):
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     print(f"{timestamp} {message}")
-
-### PATHS ###
-path = os.getcwd()
-project_path = os.path.abspath(os.path.join(path, '..'))
-src_dir = os.path.join(project_path, 'fastapi', 'src')
-
-if not os.path.exists(src_dir):
-    os.makedirs(src_dir)
-    print_with_timestamp('Le répertoire src a été créé avec succès.')
-else:
-    print_with_timestamp('Le répertoire src existe déjà.')
 
 
 ### PREPROCESSING ###
@@ -41,7 +31,7 @@ def preprocessing_content():
     print_with_timestamp('Preprocessing en cours ...')
     nlp = spacy.load('en_core_web_sm')
     
-    tmdb_content = pd.read_csv(project_path + '/fastapi/src/TMDB_content.csv')
+    tmdb_content = pd.read_csv('../fastapi/src/TMDB_content.csv')
     tmdb_content = tmdb_content.loc[:,['tmdb_id', 'title', 'genres', 'keywords', 'director', 'cast']]
     keyword_counts = tmdb_content['keywords'].str.split(',').explode('keywords').value_counts().loc[lambda x: x > 1]
 
@@ -59,8 +49,7 @@ def preprocessing_content():
     tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [x,x,x])
     tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [str.lower(i.replace(' ','')) for i in x])
 
-    # We keep 6 actors as the main cast:
-    if len(tmdb_content['cast']) > 6:
+    if len(tmdb_content['cast']) > 6: # Garder 6 acteurs maximum
         tmdb_content['cast'] = tmdb_content['cast'].apply(lambda x: x[0:6])
 
     tmdb_content['soup'] = tmdb_content['genres'] + tmdb_content['keywords'] + tmdb_content['cast'] + tmdb_content['director']
@@ -104,7 +93,7 @@ def application_recommandations(preprocessed_content):
         except Exception as e:
             print_with_timestamp(f"Error for movie_id {movie}: {e}")
     tmdb_content_based = pd.DataFrame(all_scores)
-    tmdb_content_based.to_csv(project_path + '/fastapi/src/TMDB_content_based.csv', index = False)
+    tmdb_content_based.to_csv('../fastapi/src/TMDB_content_based.csv', index = False)
     print_with_timestamp('Recommandations basées sur le contenu créées. Le fichier TMDB_content_based.csv est disponible dans le dossier fastapi/src.')
     return tmdb_content_based
 
