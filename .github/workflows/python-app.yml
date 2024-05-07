@@ -1,7 +1,3 @@
-Bien sûr ! Voici comment vous pouvez inclure ce script dans votre flux de travail GitHub Actions :
-
-yaml
-
 name: Check Directory Contents
 
 on:
