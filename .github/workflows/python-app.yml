@@ -1,0 +1,25 @@
+Bien sûr ! Voici comment vous pouvez inclure ce script dans votre flux de travail GitHub Actions :
+
+yaml
+
+name: Check Directory Contents
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-directory-contents:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Run directory check script
+      run: |
+        echo "Contents of current directory:"
+        ls -R
+        
+        echo "Contents of 'fastapi/src' directory:"
+        ls -R fastapi/src
