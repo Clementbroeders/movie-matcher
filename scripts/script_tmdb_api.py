@@ -184,13 +184,19 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
 
     # Convert to CSV
-    merged_df.to_csv('../fastapi/src/TMDB_content.csv', index=False)
+    try:
+        merged_df.to_csv('../fastapi/src/TMDB_content.csv', index=False)
+    except:
+        merged_df.to_csv('fastapi/src/TMDB_content.csv', index=False)
     print_with_timestamp("merged_df a été exporté et enregistré dans le répertoire src/TMDB_content.csv")
 
     # Create dataframe df_providers_csv from movie providers and export as CSV
     df_providers_csv = pd.DataFrame(csv_providers_list)
     df_providers_csv = df_providers_csv.drop_duplicates('provider_name', keep='first')
-    df_providers_csv.to_csv('../fastapi/src/TMDB_providers.csv', index=False)
+    try:
+        df_providers_csv.to_csv('../fastapi/src/TMDB_providers.csv', index=False)
+    except:
+        df_providers_csv.to_csv('fastapi/src/TMDB_providers.csv', index=False)
     print_with_timestamp("df_providers_csv a été exporté et enregistré dans le répertoire src/TMDB_providers.csv")
     
     return merged_df, df_providers_csv
