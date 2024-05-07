@@ -15,7 +15,7 @@ def print_with_timestamp(message):
 
 
 ### FONCTIONS ###
-def download_tmdb_daily(number_of_movies= 1000):
+def download_tmdb_daily(number_of_movies):
     # Get the URL file
     today = datetime.now()
     yesterday = today - timedelta(days=1)
@@ -203,7 +203,7 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
 ### LANCEMENT DU SCRIPT ###
 
-tmdb_daily = download_tmdb_daily(number_of_movies=100)
+tmdb_daily = download_tmdb_daily(number_of_movies = 20000)
 
 movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 
