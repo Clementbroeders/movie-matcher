@@ -9,7 +9,10 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  repository-projects: write
+  
 
 jobs:
   build-and-update-csv:
@@ -44,4 +47,4 @@ jobs:
         git config --global user.name "GitHub Action"
         git add .
         git commit -m "Update CSV files"
-        git push https://${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+        git push
