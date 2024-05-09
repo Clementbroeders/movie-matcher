@@ -214,7 +214,7 @@ def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords
 
 ### LANCEMENT DU SCRIPT ###
 
-tmdb_daily = download_tmdb_daily(number_of_movies = 200)
+tmdb_daily = download_tmdb_daily(number_of_movies = 20000)
 
 movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 
