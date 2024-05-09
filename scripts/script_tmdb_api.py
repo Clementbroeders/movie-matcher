@@ -15,14 +15,6 @@ def print_with_timestamp(message):
 
 
 ### FONCTIONS ###
-def concatener_annees(group): 
-    # Fonction pour concatener les titres des films avec les années si doublon
-    if len(group) > 1: # Non utilisé pour le moment (application des années sur tous les films)
-        group['title'] = group['title'] + ' (' + group['year'] + ')'
-        
-    group['title'] = group['title'] + ' (' + group['year'] + ')' # A supprimer si application uniquement sur les doublons
-    return group
-
 def download_tmdb_daily(number_of_movies):
     # Get the URL file
     today = datetime.now()
@@ -163,11 +155,10 @@ def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords
     # Create dataframe df_movie with movie details
     df_movie = pd.DataFrame(movie_details_list)
     df_movie['genres'] = df_movie['genres'].apply(lambda x: [genre['name'] for genre in x]).apply(lambda x: ', '.join(x))
-    df_movie['release_date'] = pd.to_datetime(df_movie['release_date'])
-    df_movie['year'] = df_movie['release_date'].dt.year
+    df_movie['year'] = pd.to_datetime(df_movie['release_date']).dt.year
     df_movie.drop(columns=['release_date'], inplace=True)
-    df_movie['year'] = df_movie['year'].astype(int).astype(str)
-    df_movie = df_movie.groupby('title').apply(concatener_annees).reset_index(drop=True)
+    df_movie['year'] = df_movie['year'].fillna(df_movie['year'].median())
+    df_movie['title'] = df_movie.apply(lambda row: f"{row['title']} ({str(row['year'])})", axis=1).reset_index(drop=True)
     
     # Create dataframe df_title_fr from movie title_fr
     df_title_fr = pd.DataFrame(movie_title_fr_list)
@@ -223,7 +214,7 @@ def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords
 
 ### LANCEMENT DU SCRIPT ###
 
-tmdb_daily = download_tmdb_daily(number_of_movies = 20000)
+tmdb_daily = download_tmdb_daily(number_of_movies = 200)
 
 movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 
