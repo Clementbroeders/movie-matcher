@@ -15,6 +15,14 @@ def print_with_timestamp(message):
 
 
 ### FONCTIONS ###
+def concatener_annees(group): 
+    # Fonction pour concatener les titres des films avec les années si doublon
+    if len(group) > 1: # Non utilisé pour le moment (application des années sur tous les films)
+        group['title'] = group['title'] + ' (' + group['year'] + ')'
+        
+    group['title'] = group['title'] + ' (' + group['year'] + ')' # A supprimer si application uniquement sur les doublons
+    return group
+
 def download_tmdb_daily(number_of_movies):
     # Get the URL file
     today = datetime.now()
@@ -47,9 +55,10 @@ def api_request(tmdb_daily, print_interval=100):
         "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMTFkY2JjYzE4MTFlNWIxOGI3MDg1MTIyOWRiOGYzZSIsInN1YiI6IjY1OTQzNWVlY2U0ZGRjNmQ5MDdlYWQxNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.5VYKD-qYGgixOfyjsDIR5We_wmJklWml5waulWzQVTA"
     }
     url_start = "https://api.themoviedb.org/3/movie/"
-    url_end = '?language=en-US&append_to_response=keywords,credits,watch/providers'
+    url_end = '?language=en-US&append_to_response=translations,keywords,credits,watch/providers'
 
     movie_details_list = []
+    movie_title_fr_list = []
     movie_keywords_list = []
     movie_credits_list = []
     movie_director_list = []
@@ -76,6 +85,16 @@ def api_request(tmdb_daily, print_interval=100):
             }
             movie_details_list.append(movie_details)
             
+            # Movie title_fr
+            translations = movie_data.get("translations", {}).get("translations", [])
+            for translation in translations:
+                if translation.get("iso_3166_1") == "FR":
+                    movie_title_fr = {
+                        "tmdb_id": movie_data.get("id", None),
+                        "title_fr": translation.get("data", {}).get("title", None)
+                    }
+                    movie_title_fr_list.append(movie_title_fr)
+            
             # Movie keywords
             movie_keywords = {
                 "tmdb_id": movie_data.get("id", None),
@@ -89,7 +108,6 @@ def api_request(tmdb_daily, print_interval=100):
                 "cast": []
             }
             cast_data = movie_data.get('credits', {}).get('cast', [])
-
             for actor in cast_data:
                 actor_info = {
                     "name": actor.get("name", None)
@@ -112,7 +130,6 @@ def api_request(tmdb_daily, print_interval=100):
                 "tmdb_id": movie_data.get("id", None),
                 "watch_providers": []
             }
-            
             providers_data = movie_data.get("watch/providers", {}).get("results", {}).get("FR", {}).get("flatrate", [])  
             for provider in providers_data:
                 provider_info = {
@@ -139,22 +156,25 @@ def api_request(tmdb_daily, print_interval=100):
             print_with_timestamp(f"Error fetching details for movie_id: {movie_id}")
             
     print_with_timestamp('Toutes les données ont été extraites avec succès.')
-    return movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list
+    return movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list
 
 
-def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list):    
+def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list):    
     # Create dataframe df_movie with movie details
     df_movie = pd.DataFrame(movie_details_list)
     df_movie['genres'] = df_movie['genres'].apply(lambda x: [genre['name'] for genre in x]).apply(lambda x: ', '.join(x))
     df_movie['release_date'] = pd.to_datetime(df_movie['release_date'])
     df_movie['year'] = df_movie['release_date'].dt.year
     df_movie.drop(columns=['release_date'], inplace=True)
-    df_movie['year'] = df_movie['year'].astype(str)
-    def concatener_annees(group): # Fonction pour concatener les titres des films avec les années si doublon
-        if len(group) > 1:
-            group['title'] = group['title'] + ' (' + group['year'] + ')'
-        return group
+    df_movie['year'] = df_movie['year'].astype(int).astype(str)
     df_movie = df_movie.groupby('title').apply(concatener_annees).reset_index(drop=True)
+    
+    # Create dataframe df_title_fr from movie title_fr
+    df_title_fr = pd.DataFrame(movie_title_fr_list)
+    df_title_fr = pd.merge(df_title_fr, df_movie[['tmdb_id', 'title', 'year']], on='tmdb_id', how='right')
+    df_title_fr['title_fr'] = df_title_fr['title_fr'].replace('', None)
+    df_title_fr['title_fr'] = df_title_fr.apply(lambda row: row['title'] if pd.isnull(row['title_fr']) else f"{row['title_fr']} ({row['year']})", axis=1)
+    df_title_fr = df_title_fr.drop(columns=['title', 'year'])
 
     # Create dataframe df_keywords from movie keywords
     df_keywords = pd.DataFrame(movie_keywords_list)
@@ -174,9 +194,9 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
     df_providers['watch_providers'] = df_providers['watch_providers'].apply(lambda x: [str(provider['provider_id']) for provider in x]).apply(lambda x: ', '.join(x))
     df_providers['watch_providers'] = df_providers['watch_providers'].replace('', None)
 
-
     # Merge all dataframe in one : merged_df
-    merged_df = pd.merge(df_movie, df_keywords, on='tmdb_id', how='left')
+    merged_df = pd.merge(df_movie, df_title_fr, on='tmdb_id', how='left')
+    merged_df = pd.merge(merged_df, df_keywords, on='tmdb_id', how='left')
     merged_df = pd.merge(merged_df, df_credits, on='tmdb_id', how='left')
     merged_df = pd.merge(merged_df, df_director, on='tmdb_id', how='left')
     merged_df = pd.merge(merged_df, df_providers, on='tmdb_id', how='left')
@@ -205,6 +225,6 @@ def create_movie_content(movie_details_list, movie_keywords_list, movie_credits_
 
 tmdb_daily = download_tmdb_daily(number_of_movies = 20000)
 
-movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
+movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 
-merged_df, df_providers_csv = create_movie_content(movie_details_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list)
+merged_df, df_providers_csv = create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list)

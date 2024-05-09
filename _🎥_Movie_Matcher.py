@@ -151,6 +151,8 @@ def apply_filters(df, filters):
                     filtered_df[filter_name] = filtered_df[filter_name].fillna('')
                     if filter_name == 'watch_providers':
                         filter_conditions = [filtered_df[filter_name].str.contains(fr'\b{value}\b', case=True) for value in filter_values]
+                    elif filter_name == 'year':
+                        filter_conditions = [filtered_df[filter_name].isin([value]) for value in filter_values]
                     else:
                         filter_conditions = [filtered_df[filter_name].str.contains(value, case=False) for value in filter_values]
                     combined_condition = pd.concat(filter_conditions, axis=1).any(axis=1)
@@ -207,11 +209,11 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-tmdb_selection = tmdb_content.loc[:,['tmdb_id', 'title']]
+tmdb_selection = tmdb_content.loc[:,['tmdb_id', 'title_fr']]
 tmdb_selection.loc[-1] = [None, 'Selectionnez un film']
 tmdb_selection.index = tmdb_selection.index + 1
 tmdb_selection = tmdb_selection.sort_index()
-tmdb_selection = tmdb_selection.sort_values(by='title', key=lambda x: x.replace('Selectionnez un film', ''))
+tmdb_selection = tmdb_selection.sort_values(by='title_fr', key=lambda x: x.replace('Selectionnez un film', ''))
 
 columns = st.columns(5)
 selected_movies = []
@@ -221,16 +223,16 @@ for i, column in enumerate(columns):
             <p style="font-size: 1.2rem;">Film {i+1}</p>
         </div>
     """, unsafe_allow_html=True)
-    movie = column.selectbox(f"Film {i+1}", tmdb_selection['title'], label_visibility='collapsed')
-    movie_id = tmdb_selection.loc[tmdb_selection['title'] == movie, 'tmdb_id'].values[0]
-    selected_movies.append({"id": movie_id, "title": movie})
+    movie = column.selectbox(f"Film {i+1}", tmdb_selection['title_fr'], label_visibility='collapsed')
+    movie_id = tmdb_selection.loc[tmdb_selection['title_fr'] == movie, 'tmdb_id'].values[0]
+    selected_movies.append({"id": movie_id, "title_fr": movie})
 
 st.markdown("")
 
 ## Bouton recommandations ##
 columns = st.columns([2, 1, 2])
 with columns[1]:
-    button_recommandations = st.button("🤖 Générer les recommandations 🤖", help = "Cliquez ici pour générer les recommandations", type = 'primary')
+    button_recommandations = st.button("🤖 Générer les recommandations 🤖", help = "Cliquez ici pour générer les recommandations", type = 'primary', use_container_width = True)
 
 if button_recommandations:
     ## FastAPI + Filtres ##
@@ -294,7 +296,7 @@ st.markdown("")
 if st.session_state.recommandation:
     filters_genres = st.session_state.recommended_movies['genres'].str.split(',').explode('genres').str.strip().sort_values().unique() 
     filters_keywords = st.session_state.recommended_movies['keywords'].dropna().str.split(',').explode('keywords').str.strip().sort_values().unique()
-    filters_year = st.session_state.recommended_movies['year'].sort_values(ascending = False).unique()
+    filters_year = st.session_state.recommended_movies['year'].dropna().sort_values(ascending = False).unique().astype(int)
     filters_cast = st.session_state.recommended_movies['cast'].dropna().str.split(',').explode('cast').str.strip().sort_values().unique()
     filters_director = st.session_state.recommended_movies['director'].sort_values().unique()
     filters_streaming = tmdb_providers[tmdb_providers['provider_id'].astype(str).isin(
@@ -304,7 +306,7 @@ if st.session_state.recommandation:
 else:
     filters_genres = tmdb_content['genres'].str.split(',').explode('genres').str.strip().sort_values().unique() 
     filters_keywords = tmdb_content['keywords'].dropna().str.split(',').explode('keywords').str.strip().sort_values().unique()
-    filters_year = tmdb_content['year'].sort_values(ascending = False).unique()
+    filters_year = tmdb_content['year'].dropna().sort_values(ascending = False).unique().astype(int)
     filters_cast = tmdb_content['cast'].dropna().str.split(',').explode('cast').str.strip().sort_values().unique()
     filters_director = tmdb_content['director'].sort_values().unique()
     filters_streaming = tmdb_providers[tmdb_providers['provider_id'].astype(str).isin(
@@ -329,12 +331,18 @@ with columns[1]:
     st.session_state.selected_filters['keywords'] = st.multiselect('Sélectionnez le(s) mot(s)-clé(s)', filters_keywords, key = "filter_keywords")
     
 with columns[2]:
-    st.markdown("""
-        <div style='text-align:center;'>
-            <p style="font-size: 1.2rem;">Années</p>
-        </div>
-    """, unsafe_allow_html=True)
-    st.session_state.selected_filters['year'] = st.multiselect('Sélectionnez l\'année ou les années', filters_year, key = "filter_year")
+    sub_columns = st.columns([0.15, 1, 0.15])
+    with sub_columns[1]:
+        st.markdown("""
+            <div style='text-align:center;'>
+                <p style="font-size: 1.2rem;">Période de sortie</p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.session_state.selected_filters['year'] = st.slider("Sélectionnez une période", min(filters_year), max(filters_year), (min(filters_year), max(filters_year)), key = "filter_year")
+        if st.session_state.selected_filters['year'][0] == min(filters_year) and st.session_state.selected_filters['year'][1] == max(filters_year):
+            st.session_state.selected_filters['year'] = []
+        else:
+            st.session_state.selected_filters['year'] = list(range(st.session_state.selected_filters['year'][0], st.session_state.selected_filters['year'][1] + 1))
 
 st.markdown("")
 
@@ -371,9 +379,9 @@ st.markdown("---")
 
 
 ### AFFICHER FILMS ###
-columns = st.columns([3, 1, 3])
+columns = st.columns([2, 1, 2])
 with columns[1]:
-    button_affichage = st.button("🎥 Afficher les films 🎥", help = "Cliquez ici pour afficher les films recommandés", type = 'primary')
+    button_affichage = st.button("🎥 Afficher les films 🎥", help = "Cliquez ici pour afficher les films recommandés", type = 'primary', use_container_width = True)
 
 if button_affichage:
     ## Application des filtres ##
@@ -424,9 +432,9 @@ if button_affichage:
         for i in columns_range:
             col = columns[i]
             if nb_rows >= 5:
-                movie_name = data_affichage['title'][i]
+                movie_name = data_affichage['title_fr'][i]
             else:
-                movie_name = data_affichage['title'][i-1]
+                movie_name = data_affichage['title_fr'][i-1]
             col.markdown(f"""
                 <div style='text-align:center;'>
                     <p style="font-size: 1rem;">{movie_name}</p>
