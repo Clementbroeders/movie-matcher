@@ -157,14 +157,14 @@ def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords
     df_movie['genres'] = df_movie['genres'].apply(lambda x: [genre['name'] for genre in x]).apply(lambda x: ', '.join(x))
     df_movie['year'] = pd.to_datetime(df_movie['release_date']).dt.year
     df_movie.drop(columns=['release_date'], inplace=True)
-    df_movie['year'] = df_movie['year'].fillna(df_movie['year'].median())
+    df_movie['year'] = df_movie['year'].fillna(df_movie['year'].median()).astype(int)
     df_movie['title'] = df_movie.apply(lambda row: f"{row['title']} ({str(row['year'])})", axis=1).reset_index(drop=True)
     
     # Create dataframe df_title_fr from movie title_fr
     df_title_fr = pd.DataFrame(movie_title_fr_list)
     df_title_fr = pd.merge(df_title_fr, df_movie[['tmdb_id', 'title', 'year']], on='tmdb_id', how='right')
     df_title_fr['title_fr'] = df_title_fr['title_fr'].replace('', None)
-    df_title_fr['title_fr'] = df_title_fr.apply(lambda row: row['title'] if pd.isnull(row['title_fr']) else f"{row['title_fr']} ({row['year']})", axis=1)
+    df_title_fr['title_fr'] = df_title_fr.apply(lambda row: row['title'] if pd.isnull(row['title_fr']) else f"{row['title_fr']} ({str(row['year'])})", axis=1)
     df_title_fr = df_title_fr.drop(columns=['title', 'year'])
 
     # Create dataframe df_keywords from movie keywords
