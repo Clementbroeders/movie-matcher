@@ -2,15 +2,14 @@
 import streamlit as st
 import pandas as pd
 import requests
-import random
 from surprise import Dataset, Reader, SVD
 import ast
 
 
 ### CONFIGURATION ###
 st.set_page_config(
-    page_title="Movie Matcher",
-    page_icon="🎥",
+    page_title="Movie Matcher - Films",
+    page_icon="🎬",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -177,28 +176,24 @@ def calculate_column_ratios(nb_rows):
     return [1] * 5
 
 
-### HEADER ###
-image_paths = {
-    'light': "img/light.jpg",
-    'dark': "img/dark.jpg"
-}
-random_theme_mode = random.choice(['light', 'dark'])
-
-left_col, center_col, right_col = st.columns([1, 1, 1])
-with center_col: 
-    st.image(image_paths[random_theme_mode], use_column_width="auto")
-
-
 ### APPLICATION ###
 
-## INTRODUCTION ###
-st.markdown("""
-    <div style='text-align:center;'>
-        <p style="font-size: 1.2rem;">Bienvenue sur Movie Matcher, votre destination privilégiée pour des recommandations cinématographiques.</p>
-    </div>
-""", unsafe_allow_html=True)
+## HEADER ##
+columns = st.columns([0.5, 1, 0.1, 0.3, 0.1])
 
-st.markdown("---")
+with columns[1]:
+    st.markdown("""
+    <div style='text-align:center;'>
+        <h1 style="font-size: 4rem;">🎬 FILMS 🎬</h1>
+    """, unsafe_allow_html=True)
+    
+with columns[3]:
+    st.write("")
+    st.write("")
+    if st.button(label = 'Retour à l\'accueil', type = 'primary', use_container_width = True):
+        st.switch_page("_🎥_Accueil.py")
+
+st.write("---")
 
 
 ## SELECTION DES FILMS ###
@@ -227,7 +222,7 @@ for i, column in enumerate(columns):
     movie_id = tmdb_selection.loc[tmdb_selection['title_fr'] == movie, 'tmdb_id'].values[0]
     selected_movies.append({"id": movie_id, "title_fr": movie})
 
-st.markdown("")
+st.write("")
 
 ## Bouton recommandations ##
 columns = st.columns([2, 1, 2])
@@ -278,7 +273,7 @@ if st.session_state.recommandation:
         </div>
     """, unsafe_allow_html=True)
     
-st.markdown("---")
+st.write("---")
 
 
 ### FILTRES ###
@@ -290,7 +285,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("")
+st.write("")
 
 ## Initialisation des filtres ##
 if st.session_state.recommandation:
@@ -344,7 +339,7 @@ with columns[2]:
         else:
             st.session_state.selected_filters['year'] = list(range(st.session_state.selected_filters['year'][0], st.session_state.selected_filters['year'][1] + 1))
 
-st.markdown("")
+st.write("")
 
 ## Filtres column 2 ##
 
@@ -374,8 +369,8 @@ with columns[2]:
     st.session_state.selected_filters['watch_providers'] = st.multiselect('Sélectionnez le(s) plateforme(s) de streaming', filters_streaming, key = "filter_streaming")
     st.session_state.selected_filters['watch_providers'] = tmdb_providers[tmdb_providers['provider_name'].isin(st.session_state.selected_filters['watch_providers'])]['provider_id'].astype(str).tolist()
     
-st.markdown("")
-st.markdown("---")
+st.write("")
+st.write("---")
 
 
 ### AFFICHER FILMS ###
@@ -512,7 +507,7 @@ if button_affichage:
                 """, unsafe_allow_html=True)
 
 
-st.markdown("---")
+st.write("---")
 
 
 ### FOOTER ###

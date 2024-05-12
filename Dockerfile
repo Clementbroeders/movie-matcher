@@ -25,4 +25,4 @@ COPY . /home/app/
 ENV PORT=8501
 
 # Run the Streamlit app
-CMD streamlit run --server.port $PORT _🎥_Movie_Matcher.py
+CMD streamlit run --server.port $PORT _🎥_Accueil.py

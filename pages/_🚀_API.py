@@ -10,22 +10,31 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+### APPLICATION ###
 
-### APP ###
-st.markdown("""
+
+## HEADER ##
+columns = st.columns([0.5, 1, 0.1, 0.3, 0.1])
+
+with columns[1]:
+    st.markdown("""
     <div style='text-align:center;'>
-        <h2>API 🚀</h2>
-    </div>
-""", unsafe_allow_html=True)
+        <h1 style="font-size: 4rem;">🚀 API 🚀</h1>
+    """, unsafe_allow_html=True)
+    
+with columns[3]:
+    st.write("")
+    st.write("")
+    if st.button(label = 'Retour à l\'accueil', type = 'primary', use_container_width = True):
+        st.switch_page("_🎥_Accueil.py")
 
-st.markdown("---")
+st.write("---")
 
 
 ### FASTAPI ###
 available_link = False
 api_urls = [
     'http://movie-matcher-fastapi-1:4000',
-    'https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs',
     'https://moviematcher-fastapi.onrender.com/docs',
 ]
 for api_url in api_urls:
@@ -54,7 +63,12 @@ st.markdown("---")
 
 ### FOOTER ###
 st.markdown("""
-    <p style='text-align:center;'>
-        Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>. © 2024 Movie Matcher.
-    </p>
+    <div style='text-align:center;'>
+        <p>
+            Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>
+        </p>
+        <p>
+            Voir le code source sur <a href='https://github.com/Clementbroeders/movie-matcher'>GitHub</a>. © 2024 Movie Matcher.
+        </p>
+    </div>
 """, unsafe_allow_html=True)
