@@ -48,8 +48,9 @@ def preprocessing_content():
     tmdb_content['cast'] = tmdb_content['cast'].apply(lambda x: str(x).split(','))
     tmdb_content['cast'] = tmdb_content['cast'].apply(lambda x: [str.lower(i.replace(' ','')) for i in x])
 
-    tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [x,x,x])
-    tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [str.lower(i.replace(' ','')) for i in x])
+    tmdb_content['director'] = tmdb_content['director'].fillna('Inconnu')
+    tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [x, x, x])
+    tmdb_content['director'] = tmdb_content['director'].apply(lambda x: [str.lower(i.replace(' ', '')) for i in x])
 
     if len(tmdb_content['cast']) > 6: # Garder 6 acteurs maximum
         tmdb_content['cast'] = tmdb_content['cast'].apply(lambda x: x[0:6])
