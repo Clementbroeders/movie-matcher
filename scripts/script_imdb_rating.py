@@ -61,7 +61,7 @@ def application_weighted_rating(movielens_links):
     vote_counts = tmdb_content[tmdb_content['vote_count'].notnull()]['vote_count'].astype('int')
     vote_averages = tmdb_content[tmdb_content['vote_average'].notnull()]['vote_average'].astype('int')
     C = vote_averages.mean()
-    m = vote_counts.quantile(0.75)
+    m = vote_counts.quantile(0.5)
     weighted_movies = tmdb_content[(tmdb_content['vote_count'] >= m) & (tmdb_content['vote_count'].notnull()) & (tmdb_content['vote_average'].notnull())]
     weighted_movies['vote_count'] = weighted_movies['vote_count'].astype('int')
     weighted_movies['vote_average'] = weighted_movies['vote_average'].astype('int')

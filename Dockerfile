@@ -7,9 +7,6 @@ RUN apt-get update
 RUN apt-get install nano unzip
 RUN apt install curl -y
 
-# Install Heroku CLI
-RUN curl -fsSL https://get.deta.dev/cli.sh | sh
-
 # Install Python Dependencies
 COPY requirements.txt /home/app
 RUN conda install -c conda-forge scikit-surprise

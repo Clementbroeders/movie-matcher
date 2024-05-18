@@ -25,7 +25,7 @@ with columns[1]:
 with columns[3]:
     st.write("")
     st.write("")
-    if st.button(label = 'Retour à l\'accueil', type = 'primary', use_container_width = True):
+    if st.button(label = '🏠 Retour à l\'accueil 🏠', type = 'primary', use_container_width = True):
         st.switch_page("_🎥_Accueil.py")
 
 st.write("---")

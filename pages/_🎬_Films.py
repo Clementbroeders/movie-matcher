@@ -2,8 +2,7 @@
 import streamlit as st
 import pandas as pd
 import requests
-from surprise import Dataset, Reader, SVD
-import ast
+from utils.movie_recommandation import movie_recommandation
 
 
 ### CONFIGURATION ###
@@ -21,7 +20,6 @@ def load_tmdb_content():
     tmdb_content = pd.read_csv("fastapi/src/TMDB_content.csv")
     return tmdb_content
 tmdb_content = load_tmdb_content()
-filtered_tmdb_content = load_tmdb_content()
 
 @st.cache_data
 def load_tmdb_providers():
@@ -56,91 +54,21 @@ if 'selected_filters_streaming' not in st.session_state:
     
 if 'selected_filters' not in st.session_state:
     st.session_state.selected_filters = {}
+    
+if 'bouton_affichage' not in st.session_state:
+    st.session_state.bouton_affichage = False
+
+if 'next_previous' not in st.session_state:
+    st.session_state.next_previous = 0
 
 
 ### FONCTIONS ###
-def movie_recommandation(favorite_movies):
-    global ratings_updated
-    favorite_movies = favorite_movies['favorite_movies']
-    
-    ### COLLABORATIVE FILTERING ###
-    # Add new user in ratings dataset:
-    new_user_id = ratings_updated['userId'].max() + 1
-    for movie in favorite_movies:
-        newdata = pd.DataFrame([[new_user_id, movie, 5.0]], columns=['userId', 'tmdb_id', 'rating'])
-        ratings_updated = pd.concat([ratings_updated, newdata], ignore_index=True)
-
-    # Train model with new data:
-    reader = Reader(rating_scale=(0.5, 5))
-    data = Dataset.load_from_df(ratings_updated[['userId', 'tmdb_id', 'rating']], reader)
-    best_hyperparams = {'n_factors': 50, 'reg_all': 0.05, 'n_epochs': 20, 'lr_all': 0.005}
-    svd = SVD(**best_hyperparams)
-    train_set = data.build_full_trainset()
-    svd.fit(train_set)
-
-    # Isolate movies the user never saw:
-    all_movies = ratings_updated['tmdb_id'].unique().tolist()
-    already_seen = ratings_updated[ratings_updated['userId'] == new_user_id]['tmdb_id'].tolist()
-    never_seen = [x for x in all_movies if x not in already_seen]
-
-    # Make predictions for new user:
-    predictions = []
-    movies = []
-    for movie in never_seen:
-        pred = svd.predict(new_user_id, movie)
-        predictions.append(pred.est)
-        movies.append(pred.iid)
-
-    # Results collaborative filtering:
-    result_collaborative = pd.DataFrame(list(zip(predictions, movies)), columns=['predicted_rating', 'tmdb_id'])
-    result_collaborative.sort_values(by='predicted_rating', ascending=False, inplace=True)   
-    
-        
-    ### CONTENT BASED FILTERING ###
-    # Filter content and open list of similarities:
-    filtered_content_based = content_based[content_based['tmdb_id'].isin(favorite_movies)]
-    filtered_content_based.loc[:, 'similarities'] = filtered_content_based['similarities'].apply(ast.literal_eval)
-    
-    result_list = []
-    for _, row in filtered_content_based.iterrows():
-        for entry in row['similarities']:
-            result_list.append({
-                'tmdb_id': entry['tmdb_id'],
-                'score': entry['score']
-            })
-
-    result_content = pd.DataFrame(result_list)
-    result_content = result_content[~result_content['tmdb_id'].isin(favorite_movies)]
-
-    # Calculate score_content:
-    alpha = 0.1  # Poids pour les valeurs en doublon
-
-    result_content = result_content.groupby('tmdb_id').agg({'score': 'sum', 'tmdb_id': 'count'})
-    result_content = result_content.rename(columns={'tmdb_id': 'count_duplicates'})
-    result_content = result_content.reset_index()
-    result_content['score_content'] = result_content.apply(lambda row: row['score'] / row['count_duplicates'] + alpha * row['count_duplicates'] if row['count_duplicates'] > 1 else row['score'], axis=1)
-    
-    # Results content_based
-    result_content.sort_values(by='score_content', ascending=False, inplace=True)
-    
-    
-    ### REGROUPER LES FICHIERS ###
-    result = pd.merge(result_content, result_collaborative, on='tmdb_id', how='left')
-    
-    weight_collaborative = 1  # Poids pour le modèle de filtrage collaboratif
-    weight_content = 5  # Poids pour le modèle content-based
-    
-    average_predicted_rating = result['predicted_rating'].mean()
-    result['final_score'] = (weight_collaborative * result['predicted_rating'].fillna(average_predicted_rating) + weight_content * result['score_content'])
-    
-    # Results
-    result.sort_values(by='final_score', ascending=False, inplace=True)
-    result = result.loc[:,['tmdb_id', 'final_score']]
-    
-    return result.to_dict(orient='records')
-
-
 def apply_filters(df, filters):
+    '''
+    Applique les filtres sur le DataFrame de films.
+    Chaque changement de filtre applique de nouveau l'intégralité des filtres.
+    Le dataframe filtered_df sera utilisé pour l'affichage des films.
+    '''
     filtered_df = df.copy()
 
     if filters:
@@ -164,6 +92,11 @@ def apply_filters(df, filters):
     return filtered_df
 
 def calculate_column_ratios(nb_rows):
+    '''
+    Calcule les ratios de colonnes pour l'affichage des films.
+    Nombre maximum de colonnes = 5
+    Si le nombre de films est inférieur à 5, les colonnes sont centrées.
+    '''
     if nb_rows < 5:
         left_padding = (5 - nb_rows) / 2
         right_padding = (5 - nb_rows) / 2
@@ -179,18 +112,31 @@ def calculate_column_ratios(nb_rows):
 ### APPLICATION ###
 
 ## HEADER ##
-columns = st.columns([0.5, 1, 0.1, 0.3, 0.1])
+columns = st.columns([0.1, 0.3, 0.1, 1, 0.1, 0.3, 0.1])
 
 with columns[1]:
+    st.write("")
+    st.write("")
+    if st.button(label = '🔄 Rafraichir la page 🔄', type = 'primary', use_container_width = True):
+        st.session_state.recommended_movies = None
+        st.session_state.recommandation = False
+        st.session_state.filtered_recommended_movies = None
+        st.session_state.selected_filters_streaming = {}
+        st.session_state.selected_filters = {}
+        st.session_state.bouton_affichage = False
+        st.session_state.next_previous = 0
+        st.rerun()
+
+with columns[3]:
     st.markdown("""
     <div style='text-align:center;'>
         <h1 style="font-size: 4rem;">🎬 FILMS 🎬</h1>
     """, unsafe_allow_html=True)
     
-with columns[3]:
+with columns[5]:
     st.write("")
     st.write("")
-    if st.button(label = 'Retour à l\'accueil', type = 'primary', use_container_width = True):
+    if st.button(label = '🏠 Retour à l\'accueil 🏠', type = 'primary', use_container_width = True):
         st.switch_page("_🎥_Accueil.py")
 
 st.write("---")
@@ -259,7 +205,7 @@ if button_recommandations:
         except Exception as e:
             pass
         if not success:
-            result_movies = pd.DataFrame(movie_recommandation(data))
+            result_movies = pd.DataFrame(movie_recommandation(data, ratings_updated, content_based))
 
         recommended_movies = pd.merge(result_movies, tmdb_content, on='tmdb_id', how='left')
         st.session_state.recommended_movies = recommended_movies
@@ -374,11 +320,15 @@ st.write("---")
 
 
 ### AFFICHER FILMS ###
-columns = st.columns([2, 1, 2])
+columns = st.columns([1.25, 1, 1.25])
 with columns[1]:
     button_affichage = st.button("🎥 Afficher les films 🎥", help = "Cliquez ici pour afficher les films recommandés", type = 'primary', use_container_width = True)
+    if button_affichage:
+        st.session_state.bouton_affichage = True
+        st.session_state.next_previous = 0
 
-if button_affichage:
+    
+if st.session_state.bouton_affichage:   
     ## Application des filtres ##
     if st.session_state.recommandation:
         if st.session_state.selected_filters or all(not st.session_state.selected_filters[key] for key in st.session_state.selected_filters):
@@ -396,7 +346,7 @@ if button_affichage:
             nb_rows = len(st.session_state.filtered_tmdb_content)
             
         data_affichage = st.session_state.filtered_tmdb_content
-            
+    
     ## Affichage films recommandés ##
     if nb_rows == 0:
         st.markdown("""
@@ -415,21 +365,53 @@ if button_affichage:
         """, unsafe_allow_html=True)
 
         st.markdown("")
+        
+        ## Boutons suivants/précédents ##
+        data_affichage_updated = data_affichage # Initialisation variable
+        nb_rows_updated = len(data_affichage_updated) # Initialisation variable
+
+        columns = st.columns([1, 0.25, 0.1, 0.25, 1])
                 
+        with columns[1]:
+            if st.button(label='Précédent', type='primary', use_container_width=True):
+                if st.session_state.next_previous % 5 != 0:
+                    st.session_state.next_previous -= st.session_state.next_previous % 5
+                else:
+                    st.session_state.next_previous -= 5
+                if st.session_state.next_previous < 0:
+                    st.session_state.next_previous = 0
+                data_affichage_updated = data_affichage.iloc[st.session_state.next_previous:].reset_index(drop=True)
+                nb_rows_updated = len(data_affichage_updated)
+                
+        with columns[3]:
+            if st.button(label='Suivant', type='primary', use_container_width=True):
+                if nb_rows - st.session_state.next_previous > 5:
+                    st.session_state.next_previous += 5
+                    if st.session_state.next_previous > nb_rows:
+                        st.session_state.next_previous = nb_rows
+                    data_affichage_updated = data_affichage.iloc[st.session_state.next_previous:].reset_index(drop=True)
+                    nb_rows_updated = len(data_affichage_updated)
+                else:
+                    data_affichage_updated = data_affichage.iloc[st.session_state.next_previous:].reset_index(drop=True)
+                    nb_rows_updated = len(data_affichage_updated)
+                                    
+        if nb_rows_updated == nb_rows:
+            st.session_state.next_previous = 0 # Réinitialisation de la variable next_previous quand un filtre est appliqué/actualisation partielle de la page  
+                        
         ## Affichage titre films ##
-        if nb_rows >= 5:
+        if nb_rows_updated >= 5:
             columns = st.columns(5)
             columns_range = [i for i in range(0, 5)]
         else:
-            columns = st.columns(calculate_column_ratios(nb_rows))
-            columns_range = [i for i in range(1, nb_rows + 1)]
+            columns = st.columns(calculate_column_ratios(nb_rows_updated))
+            columns_range = [i for i in range(1, nb_rows_updated + 1)]
             
         for i in columns_range:
             col = columns[i]
-            if nb_rows >= 5:
-                movie_name = data_affichage['title_fr'][i]
+            if nb_rows_updated >= 5:
+                movie_name = data_affichage_updated['title_fr'][i]
             else:
-                movie_name = data_affichage['title_fr'][i-1]
+                movie_name = data_affichage_updated['title_fr'][i-1]
             col.markdown(f"""
                 <div style='text-align:center;'>
                     <p style="font-size: 1rem;">{movie_name}</p>
@@ -437,30 +419,30 @@ if button_affichage:
             """, unsafe_allow_html=True)
         
         ## Affichage posters films ##
-        poster_url_begin = "https://image.tmdb.org/t/p/w500/"
+        poster_url_begin = "https://image.tmdb.org/t/p/original"
         
-        if nb_rows >= 5:
+        if nb_rows_updated >= 5:
             columns = st.columns(5)
             columns_range = [i for i in range(0, 5)]
         else:
-            columns = st.columns(calculate_column_ratios(nb_rows))
-            columns_range = [i for i in range(1, nb_rows + 1)]
+            columns = st.columns(calculate_column_ratios(nb_rows_updated))
+            columns_range = [i for i in range(1, nb_rows_updated + 1)]
             
         for i in columns_range:
             col = columns[i]
-            if nb_rows >= 5:
-                full_poster_url = poster_url_begin + data_affichage['poster_path'][i]
+            if nb_rows_updated >= 5:
+                full_poster_url = poster_url_begin + data_affichage_updated['poster_path'][i]
             else:
-                full_poster_url = poster_url_begin + data_affichage['poster_path'][i-1]
+                full_poster_url = poster_url_begin + data_affichage_updated['poster_path'][i-1]
             col.image(full_poster_url, use_column_width="auto")
             
         ## Affichage streaming films ##
-        if nb_rows >= 5:
+        if nb_rows_updated >= 5:
             columns = st.columns(5)
             columns_range = [i for i in range(0, 5)]
         else:
-            columns = st.columns(calculate_column_ratios(nb_rows))
-            columns_range = [i for i in range(1, nb_rows + 1)]
+            columns = st.columns(calculate_column_ratios(nb_rows_updated))
+            columns_range = [i for i in range(1, nb_rows_updated + 1)]
             
         for i in columns_range:
             col = columns[i]
@@ -470,13 +452,13 @@ if button_affichage:
                 </div>
             """, unsafe_allow_html=True)
                       
-            if nb_rows >= 5:
+            if nb_rows_updated >= 5:
                 cell = f'{i}'
             else:
                 cell = f'{i-1}'
                 
             cell = int(cell)
-            watch_providers = data_affichage['watch_providers'][cell]
+            watch_providers = data_affichage_updated['watch_providers'][cell]
             
             try:
                 providers_list = tmdb_providers[tmdb_providers['provider_id'].astype(int).isin([int(provider_id.strip('"')) for provider_id in watch_providers.split(',')])]['provider_name'].to_list()
@@ -514,7 +496,7 @@ st.write("---")
 st.markdown("""
     <div style='text-align:center;'>
         <p>
-            Powered by <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>
+            Propulsé par <a href='https://streamlit.io/'>Streamlit</a>, <a href='https://www.justwatch.com/'>JustWatch</a>, <a href='https://www.themoviedb.org/'>TMDB</a> & <a href='https://movielens.org/'>MovieLens</a>
         </p>
         <p>
             Voir le code source sur <a href='https://github.com/Clementbroeders/movie-matcher'>GitHub</a>. © 2024 Movie Matcher.

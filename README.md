@@ -28,10 +28,6 @@ Vous pouvez accéder à la **documentation de l'API** au lien suivant :
 [API docs](https://moviematcher-fastapi.onrender.com/docs)
 
 
-Ou bien au backup suivant :
-
-[Backup API docs](https://movie-matcher-fastapi-6b7d32444024.herokuapp.com/docs)
-
 ---
 
 ## Schéma des flux

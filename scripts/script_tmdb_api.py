@@ -66,9 +66,10 @@ def api_request(tmdb_daily, print_interval=100):
             movie_data = response.json()
             
             # Movie details
+            title = movie_data.get("original_title", None) if movie_data.get("original_language") == "fr" else movie_data.get("title", None)
             movie_details = {
                 "tmdb_id": movie_data.get("id", None),
-                "title": movie_data.get("title", None),
+                "title": title,
                 "genres": movie_data.get("genres", []),
                 "release_date": movie_data.get("release_date", None),
                 "vote_average": movie_data.get("vote_average", None),
@@ -214,7 +215,7 @@ def create_movie_content(movie_details_list, movie_title_fr_list, movie_keywords
 
 ### LANCEMENT DU SCRIPT ###
 
-tmdb_daily = download_tmdb_daily(number_of_movies = 20000)
+tmdb_daily = download_tmdb_daily(number_of_movies = 30000)
 
 movie_details_list, movie_title_fr_list, movie_keywords_list, movie_credits_list, movie_director_list, movie_providers_list, csv_providers_list = api_request(tmdb_daily, print_interval=100)
 
