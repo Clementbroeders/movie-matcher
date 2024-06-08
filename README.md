@@ -38,7 +38,7 @@ Vous pouvez accéder à la **documentation de l'API** au lien suivant :
 
 ---
 
-Clone du repo
+## Clone du repo
 
 Pour cloner le repo, utilisez la commande suivante :
 

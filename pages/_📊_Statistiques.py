@@ -72,10 +72,9 @@ with columns[0]:
     st.subheader('🎥 Contenu des films🎥')
     subcolumns = st.columns([0.5, 0.5])
     with subcolumns[0]:
-        # Dernière mise à jour #
-        os_date_updated = os.path.getmtime("fastapi/src/TMDB_content.csv")
-        local_tz = 'Europe/Paris'
-        date_updated = pd.to_datetime(os_date_updated, unit = 's', utc = True).tz_convert(local_tz).strftime('%d/%m/%Y %H:%M:%S')
+        # Dernière mise à jour #       
+        data = pd.read_csv('fastapi/src/last_update.txt', header = None)
+        date_updated = data[0][0]
         st.metric('Mise à jour des films', date_updated)
     
         # Nombre de plateformes #

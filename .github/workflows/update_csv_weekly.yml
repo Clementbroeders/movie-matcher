@@ -21,24 +21,34 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install schedule requests pandas scikit-learn spacy
         python -m spacy download en_core_web_sm
+
     - name: Run script_tmdb_api.py
       run: |
         python scripts/script_tmdb_api.py
+
     - name: Run script_imdb_rating.py
       run: |
         python scripts/script_imdb_rating.py
+
     - name: Run script_tmdb_content_based.py
       run: |
         python scripts/script_tmdb_content_based.py
+
+    - name: Create last update file
+      run: |
+        date '+%d/%m/%Y %H:%M:%S' > fastapi/src/last_update.txt
+      
     - name: Commit and push updated files
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
