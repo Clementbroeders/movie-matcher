@@ -34,10 +34,11 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("---")
+st.write("---")
+
 
 ## BOUTONS PAGE ACCUEIL
-st.markdown("")
+st.write("")
 
 columns = st.columns([0.5, 1, 0.5, 1, 0.5])
 
@@ -56,16 +57,28 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("")
-st.markdown("")
+st.write("")
+st.write("")
+
+columns = st.columns([0.7, 0.5, 0.2, 0.5, 0.7])
+with columns[1]:
+    if st.button(label = '🎞️ Informations Films 🎞️', type = 'primary', use_container_width = True):
+        st.switch_page("pages/_🎞️_Informations.py")
+        
+with columns[3]:
+    if st.button(label = '📊 Statistiques 📊', type = 'primary', use_container_width = True):
+        st.switch_page("pages/_📊_Statistiques.py")
+
+st.write("")
+st.write("")
 
 columns = st.columns([0.5, 1, 0.5, 1, 0.5])
 with columns[2]:
     if st.button(label = '🚀 Afficher l\'API 🚀', type = 'primary', use_container_width = True):
         st.switch_page("pages/_🚀_API.py")
 
-st.markdown("")
-st.markdown("---")
+st.write("")
+st.write("---")
 
 
 ### FOOTER ###
