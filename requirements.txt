@@ -3,5 +3,6 @@ pandas
 scikit-learn
 spacy
 requests
+numpy<2
 surprise
 plotly
