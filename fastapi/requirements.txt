@@ -3,4 +3,5 @@ uvicorn[standard]
 pandas
 gunicorn
 pydantic
+numpy<2
 scikit-surprise
