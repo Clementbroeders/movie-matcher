@@ -146,5 +146,5 @@ with columns[0]:
 with columns[1]:
     poster_url_begin = "https://image.tmdb.org/t/p/original"
     full_poster_url = poster_url_begin + filtered_tmdb_content["poster_path"].values[0]
-    st.image(full_poster_url, use_column_width="auto")
+    st.image(full_poster_url, use_container_width = True)
     

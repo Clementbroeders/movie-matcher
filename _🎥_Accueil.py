@@ -21,7 +21,7 @@ random_theme_mode = random.choice(['light', 'dark'])
 
 left_col, center_col, right_col = st.columns([1, 1, 1])
 with center_col: 
-    st.image(image_paths[random_theme_mode], use_column_width="auto")
+    st.image(image_paths[random_theme_mode], use_container_width = True)
 
 
 ### APPLICATION ###

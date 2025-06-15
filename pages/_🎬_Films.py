@@ -434,7 +434,7 @@ if st.session_state.bouton_affichage:
                 full_poster_url = poster_url_begin + data_affichage_updated['poster_path'][i]
             else:
                 full_poster_url = poster_url_begin + data_affichage_updated['poster_path'][i-1]
-            col.image(full_poster_url, use_column_width="auto")
+            col.image(full_poster_url, use_container_width = True)
             
         ## Affichage streaming films ##
         if nb_rows_updated >= 5:
